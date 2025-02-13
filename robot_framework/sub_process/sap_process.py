@@ -54,11 +54,16 @@ def get_property_debt(session, cpr: str, name: str, property_number: str) -> Mis
     Returns:
         A Person object describing the missing payments.
     """
-    fmcacov.open_forretningspartner(session, cpr)
-    tree = session.findById("wnd[0]/shellcont/shell")
-    node_items = _find_tree_items(tree, property_number)
-
     person = MissingPaymentPerson(name, cpr)
+
+    fmcacov.open_forretningspartner(session, cpr)
+    tree = session.findById("wnd[0]/shellcont/shell", False)
+
+    if not tree:
+        # In case the person can't be found in SAP
+        return person
+
+    node_items = _find_tree_items(tree, property_number)
 
     for key, text in node_items:
         case = MissingPaymentCase(text)

@@ -122,7 +122,7 @@ def get_owners(property_number: str, search_words: list[str]) -> list[tuple[str,
 
     # Get info
     tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
-    tree.TreeItemControl(RegexName=property_number).GetSelectionItemPattern().Select()
+    tree.TreeItemControl(RegexName=f"0*{property_number},").GetSelectionItemPattern().Select()
     structura.ButtonControl(Name="Hent alle oplysninger", searchDepth=2).GetInvokePattern().Invoke()
 
     owners = []
