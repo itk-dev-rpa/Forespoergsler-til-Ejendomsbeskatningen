@@ -6,7 +6,6 @@ import os
 import re
 
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
-from OpenOrchestrator.database.queues import QueueElement
 from itk_dev_shared_components.sap import multi_session
 from itk_dev_shared_components.graph import authentication as graph_authentication
 from itk_dev_shared_components.graph import mail as graph_mail
@@ -22,7 +21,6 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     graph_creds = orchestrator_connection.get_credential(config.GRAPH_API)
     graph_access = graph_authentication.authorize_by_username_password(graph_creds.username, **json.loads(graph_creds.password))
 
-    structura_process.open_structura()
     session = multi_session.get_all_sap_sessions()[0]
 
     receivers = json.loads(orchestrator_connection.process_arguments)["receivers"]
@@ -31,13 +29,13 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
     for task in tasks:
         properties = structura_process.find_property(task.address)
-        for property in properties:
-            owners = structura_process.get_owners(property.property_number, task.search_words)
-            frozen_debt = structura_process.get_frozen_debt(property.property_number)
-            missing_payments = [sap_process.get_property_debt(session, cpr, name, property.property_number) for cpr, name in owners]
+        for property_ in properties:
+            owners = structura_process.get_owners(property_.property_number, task.search_words)
+            frozen_debt = structura_process.get_frozen_debt(property_.property_number)
+            missing_payments = [sap_process.get_property_debt(session, cpr, name, property_.property_number) for cpr, name in owners]
 
             body = mail_process.format_results(
-                property=property,
+                property=property_,
                 owners=owners,
                 frozen_debt=frozen_debt,
                 missing_payments=missing_payments
@@ -50,6 +48,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
 @dataclass
 class Task:
+    """A dataclass representing an email task."""
     address: str
     search_words: list[str]
     mail: graph_mail.Email
