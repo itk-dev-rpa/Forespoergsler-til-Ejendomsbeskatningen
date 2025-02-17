@@ -75,7 +75,7 @@ def get_property_debt(session, cpr: str, name: str, property_number: str) -> Mis
         postliste = session.findById("wnd[0]/usr/tabsDATA_DISP/tabpDATA_DISP_FC1/ssubDATA_DISP_SCA:RFMCA_COV:0202/cntlRFMCA_COV_0100_CONT5/shellcont/shell")
         gridview_util.scroll_entire_table(postliste, True)
 
-        for row in range(postliste.RowCount-1):
+        for row in range(postliste.RowCount - 1):
             status = postliste.GetCellTooltip(row, "AMPEL")
             row_text = postliste.GetCellValue(row, "TXTU2")
             amount = _convert_str_to_float(postliste.GetCellValue(row, "BETRW"))

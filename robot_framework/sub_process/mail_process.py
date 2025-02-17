@@ -65,7 +65,7 @@ def _format_missing_payments(missing_payments: list[MissingPaymentPerson]) -> El
     Returns:
         A nested html list.
     """
-    return ul [
+    return ul[
         (
             li[
                 p.name,
@@ -91,14 +91,14 @@ def send_email(receivers: list[str], address: str, html_body: str):
         html_body: The html body of the email.
     """
     smtp_util.send_email(
-                receiver=receivers,
-                sender="robot@friend.dk",
-                subject=f"Ejendomsoplysning: {address}",
-                body=html_body,
-                html_body=True,
-                smtp_server=config.SMTP_SERVER,
-                smtp_port=config.SMTP_PORT
-            )
+        receiver=receivers,
+        sender="robot@friend.dk",
+        subject=f"Ejendomsoplysning: {address}",
+        body=html_body,
+        html_body=True,
+        smtp_server=config.SMTP_SERVER,
+        smtp_port=config.SMTP_PORT
+    )
 
 
 if __name__ == '__main__':
@@ -187,12 +187,12 @@ if __name__ == '__main__':
     ]
 
     html_body = format_results(
-            raw_result=raw_result,
-            property_number=property_number,
-            owners=owners,
-            frozen_debt=frozen_debt,
-            missing_payments=missing_payments
-        )
+        raw_result=raw_result,
+        property_number=property_number,
+        owners=owners,
+        frozen_debt=frozen_debt,
+        missing_payments=missing_payments
+    )
 
     with open("test.html", 'w') as file:
         file.write(str(html_body))

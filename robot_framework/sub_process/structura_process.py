@@ -59,7 +59,6 @@ def find_property(address: str) -> list[Property]:
             location = info_pane.EditControl(AutomationId="textBoxBeliggenhed").GetValuePattern().Value
             result.append(Property(property_number, location))
 
-
     if not result:
         raise LookupError(f"No property number found for the address: {address}")
 
@@ -234,4 +233,3 @@ def kill_structura():
     """Kill KMD Logon and KMD Structura."""
     os.system("taskkill /f /im KMD.JO.Structura.exe")
     os.system("taskkill /f /im KMD.YH.Security.Logon.Desktop.exe")
-
