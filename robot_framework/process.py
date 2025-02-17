@@ -35,7 +35,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             missing_payments = [sap_process.get_property_debt(session, cpr, name, property_.property_number) for cpr, name in owners]
 
             body = mail_process.format_results(
-                property=property_,
+                property_=property_,
                 owners=owners,
                 frozen_debt=frozen_debt,
                 missing_payments=missing_payments

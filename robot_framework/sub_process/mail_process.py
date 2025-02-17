@@ -1,11 +1,11 @@
 """This module is responsible for sending results as emails."""
 
-from htpy import html, body, h3, p, ul, li, Element
+from htpy import html, body, h3, p, ul, li, Element  # pylint: disable=no-name-in-module
 
 from itk_dev_shared_components.smtp import smtp_util
 
 from robot_framework import config
-from robot_framework.sub_process.sap_process import MissingPaymentPerson, MissingPaymentCase, MissingPaymentEntry
+from robot_framework.sub_process.sap_process import MissingPaymentPerson
 from robot_framework.sub_process.structura_process import Property
 
 
@@ -93,7 +93,7 @@ def send_email(receivers: list[str], address: str, html_body: str):
     """
     smtp_util.send_email(
         receiver=receivers,
-        sender="robot@friend.dk",
+        sender="itk-rpa@mkb.aarhus.dk",
         subject=f"Ejendomsoplysning: {address}",
         body=html_body,
         html_body=True,
