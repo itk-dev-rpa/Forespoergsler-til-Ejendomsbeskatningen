@@ -1,3 +1,4 @@
+"""This module is responsible for sending results as emails."""
 
 from htpy import html, body, h3, p, ul, li, Element
 
@@ -8,7 +9,7 @@ from robot_framework.sub_process.sap_process import MissingPaymentPerson, Missin
 from robot_framework.sub_process.structura_process import Property
 
 
-def format_results(property: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
+def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
     """Format inputs as a neat html body.
 
     Args:
@@ -23,10 +24,10 @@ def format_results(property: Property, owners: list[tuple[str, str]], frozen_deb
     html_body = html[
         body[
             h3["Beliggenhed"],
-            p[property.location],
+            p[property_.location],
 
             h3["Ejendomsnummer"],
-            p[property.property_number],
+            p[property_.property_number],
 
             h3["Ejere"],
             _create_list(owners),
@@ -99,100 +100,3 @@ def send_email(receivers: list[str], address: str, html_body: str):
         smtp_server=config.SMTP_SERVER,
         smtp_port=config.SMTP_PORT
     )
-
-
-if __name__ == '__main__':
-    raw_result = '814186,7230,Skejbygårdsvej 46, 3.   TH,,8240,777159,0,Mumle bumle humle'
-    property_number = '814186'
-    owners = [
-        ('1234567891', 'Mumle bumle humle'),
-        ('2345678954', 'Ibii tippe dibbi')
-    ]
-    frozen_debt = [
-        ("hej", "med", "dig", "du")
-    ]
-    missing_payments = [
-        MissingPaymentPerson(
-            name='Mumle bumle humle',
-            cpr='1234567891',
-            cases=[
-                MissingPaymentCase(
-                    title='EJEN E...418608 Skejbygårdsvej 46 0',
-                    entries=[
-                        MissingPaymentEntry(
-                            title="Renter",
-                            status="Fucking betalt",
-                            amount=500.23
-                        ),
-                        MissingPaymentEntry(
-                            title="Blabla geybur",
-                            status="Noget andet",
-                            amount=123
-                        )
-                    ]
-                ),
-                MissingPaymentCase(
-                    title='EJEN E...418608 Skejbygårdsvej 46 0',
-                    entries=[
-                        MissingPaymentEntry(
-                            title="Renter",
-                            status="Fucking betalt",
-                            amount=500.23
-                        ),
-                        MissingPaymentEntry(
-                            title="Blabla geybur",
-                            status="Noget andet",
-                            amount=123
-                        )
-                    ]
-                )
-            ]
-        ),
-        MissingPaymentPerson(
-            name='Mumle bumle humle',
-            cpr='1234567891',
-            cases=[
-                MissingPaymentCase(
-                    title='EJEN E...418608 Skejbygårdsvej 46 0',
-                    entries=[
-                        MissingPaymentEntry(
-                            title="Renter",
-                            status="Fucking betalt",
-                            amount=500.23
-                        ),
-                        MissingPaymentEntry(
-                            title="Blabla geybur",
-                            status="Noget andet",
-                            amount=123
-                        )
-                    ]
-                ),
-                MissingPaymentCase(
-                    title='EJEN E...418608 Skejbygårdsvej 46 0',
-                    entries=[
-                        MissingPaymentEntry(
-                            title="Renter",
-                            status="Fucking betalt",
-                            amount=500.23
-                        ),
-                        MissingPaymentEntry(
-                            title="Blabla geybur",
-                            status="Noget andet",
-                            amount=123
-                        )
-                    ]
-                )
-            ]
-        )
-    ]
-
-    html_body = format_results(
-        raw_result=raw_result,
-        property_number=property_number,
-        owners=owners,
-        frozen_debt=frozen_debt,
-        missing_payments=missing_payments
-    )
-
-    with open("test.html", 'w') as file:
-        file.write(str(html_body))

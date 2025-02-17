@@ -1,3 +1,4 @@
+"""This module is responsible for interaction with the SAP software."""
 
 from dataclasses import dataclass, field
 

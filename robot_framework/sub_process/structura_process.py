@@ -1,3 +1,5 @@
+"""This module is responsible for interaction with the structura software."""
+
 import re
 import time
 from dataclasses import dataclass
@@ -10,6 +12,7 @@ from uiautomation import Keys, WindowVisualState
 
 @dataclass
 class Property:
+    """A dataclass representing a property."""
     property_number: str
     location: str
 
@@ -89,7 +92,7 @@ def _match_address_result(address: str, result: str) -> bool:
     Returns:
         True if a match is found.
     """
-    street, number, floor, door, zip, city = _deconstruct_address(address)
+    street, number, floor, door, _, _ = _deconstruct_address(address)
     regex_pattern = f"{street} {number}.+?{floor.upper() if floor else ''}.+?{door.upper() if door else ''}"
     matches = re.findall(regex_pattern, result)
     return len(matches) == 1
@@ -168,9 +171,9 @@ def get_frozen_debt(property_number: str) -> list[tuple[str, str, str, str]]:
     result = tree.TreeItemControl(RegexName=f".*{property_number.lstrip('0')}", searchDepth=1)
     result_items: list[uiautomation.TreeItemControl] = result.GetChildren()
 
-    tabPane = structura.TabControl(AutomationId="LaanesagTabControl", searchDepth=10)
-    sag_tab = tabPane.TabItemControl(Name="Lånesag", searchDepth=1)
-    move_tab = tabPane.TabItemControl(Name="Lånebevægelser", searchDepth=1)
+    tab_pane = structura.TabControl(AutomationId="LaanesagTabControl", searchDepth=10)
+    sag_tab = tab_pane.TabItemControl(Name="Lånesag", searchDepth=1)
+    move_tab = tab_pane.TabItemControl(Name="Lånebevægelser", searchDepth=1)
 
     data = []
 
@@ -179,8 +182,8 @@ def get_frozen_debt(property_number: str) -> list[tuple[str, str, str, str]]:
             item.GetSelectionItemPattern().Select()
 
             sag_tab.GetSelectionItemPattern().Select()
-            cpr = tabPane.EditControl(AutomationId="textBoxLaanansoegerCpr").GetValuePattern().Value
-            name = tabPane.EditControl(AutomationId="textBoxLaaneansoegerNavn").GetValuePattern().Value
+            cpr = tab_pane.EditControl(AutomationId="textBoxLaanansoegerCpr").GetValuePattern().Value
+            name = tab_pane.EditControl(AutomationId="textBoxLaaneansoegerNavn").GetValuePattern().Value
 
             move_tab.GetSelectionItemPattern().Select()
             structura.ComboBoxControl(AutomationId="comboBoxLaanebevaegelserFilter").SendKey(Keys.VK_UP)
@@ -204,7 +207,7 @@ def open_structura(username: str, password: str):
     Raises:
         RuntimeError: If KMD Structura failed to maximize.
     """
-    subprocess.Popen(r"C:\Program Files (x86)\KMD\KMD.JO.Structura\KMD.JO.Structura.exe", cwd=r"C:\Program Files (x86)\KMD\KMD.JO.Structura")
+    subprocess.Popen(r"C:\Program Files (x86)\KMD\KMD.JO.Structura\KMD.JO.Structura.exe", cwd=r"C:\Program Files (x86)\KMD\KMD.JO.Structura")  # pylint: disable=consider-using-with
 
     kmd_logon = uiautomation.WindowControl(AutomationId="MainLogonWindow", searchDepth=1)
     kmd_logon.EditControl(AutomationId="UserPwTextBoxUserName").GetValuePattern().SetValue(username)
@@ -223,7 +226,7 @@ def open_structura(username: str, password: str):
             if not structura.GetWindowPattern().SetWindowVisualState(WindowVisualState.Maximized):
                 continue
             break
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
     else:
         raise RuntimeError("Couldn't maximize Structura")
