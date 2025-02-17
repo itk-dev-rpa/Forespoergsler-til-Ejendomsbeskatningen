@@ -2,6 +2,11 @@
 
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 
+from itk_dev_shared_components.sap import sap_login
+
+from robot_framework import config
+from robot_framework.sub_process import structura_process
+
 
 def reset(orchestrator_connection: OrchestratorConnection) -> None:
     """Clean up, close/kill all programs and start them again. """
@@ -26,7 +31,16 @@ def kill_all(orchestrator_connection: OrchestratorConnection) -> None:
     """Forcefully close all applications used by the robot."""
     orchestrator_connection.log_trace("Killing all applications.")
 
+    structura_process.kill_structura()
+    sap_login.kill_sap()
+
 
 def open_all(orchestrator_connection: OrchestratorConnection) -> None:
     """Open all programs used by the robot."""
     orchestrator_connection.log_trace("Opening all applications.")
+
+    sap_creds = orchestrator_connection.get_credential(config.SAP_LOGIN)
+    sap_login.login_using_cli(sap_creds.username, sap_creds.password)
+
+    kmd_creds = orchestrator_connection.get_credential(config.STRUCTURA_LOGIN)
+    structura_process.open_structura(kmd_creds.username, kmd_creds.password)
