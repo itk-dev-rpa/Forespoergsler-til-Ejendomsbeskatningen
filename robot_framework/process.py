@@ -3,12 +3,12 @@
 from dataclasses import dataclass
 import json
 import os
-import re
 
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from itk_dev_shared_components.sap import multi_session
 from itk_dev_shared_components.graph import authentication as graph_authentication
 from itk_dev_shared_components.graph import mail as graph_mail
+from bs4 import BeautifulSoup
 
 from robot_framework import config
 from robot_framework.sub_process import structura_process, sap_process, mail_process
@@ -21,11 +21,13 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     graph_creds = orchestrator_connection.get_credential(config.GRAPH_API)
     graph_access = graph_authentication.authorize_by_username_password(graph_creds.username, **json.loads(graph_creds.password))
 
-    session = multi_session.get_all_sap_sessions()[0]
+    tasks = get_email_tasks(graph_access)
+    if not tasks:
+        return
 
+    session = multi_session.get_all_sap_sessions()[0]
     receivers = json.loads(orchestrator_connection.process_arguments)["receivers"]
 
-    tasks = get_email_tasks(graph_access)
 
     for task in tasks:
         properties = structura_process.find_property(task.address)
@@ -64,16 +66,19 @@ def get_email_tasks(graph_access) -> list[Task]:
         A list of Task object based on the found emails.
     """
     mails = graph_mail.get_emails_from_folder("itk-rpa@mkb.aarhus.dk", "Indbakke/Ejendomsbeskatning", graph_access)
-    mails = [mail for mail in mails if mail.sender == 'noreply@aarhus.dk' and mail.subject == 'RPA - Forespørgsler til Ejendomsbeskatning (fra Selvbetjening.aarhuskommune.dk)']
+    mails = [mail for mail in mails if mail.sender == 'noreply@aarhus.dk' and mail.subject == 'Forespørgsler til Ejendomsbeskatning (fra Selvbetjening.aarhuskommune.dk)']
 
     tasks = []
 
     for mail in mails:
-        text = mail.get_text()
-        matches = re.match("Adresse(.*)Ejere - Søgeord(.*)", text)
-        address, search_words = matches.groups()
+        soup = BeautifulSoup(mail.body)
+        address = soup.find_all('p')[1].get_text(separator="$").split('$')[1]
+        owner_1 = soup.find_all('p')[3].get_text(separator="$").split('$')[1]
+        owner_2 = soup.find_all('p')[4].get_text(separator="$").split('$')[1]
 
-        tasks.append(Task(address, search_words.split(), mail))
+        search_words = owner_1.split() + owner_2.split()
+
+        tasks.append(Task(address, search_words, mail))
 
     return tasks
 
