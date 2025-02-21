@@ -71,7 +71,7 @@ def get_email_tasks(graph_access) -> list[Task]:
     tasks = []
 
     for mail in mails:
-        soup = BeautifulSoup(mail.body)
+        soup = BeautifulSoup(mail.body, "html.parser")
         address = soup.find_all('p')[1].get_text(separator="$").split('$')[1]
         owner_1 = soup.find_all('p')[3].get_text(separator="$").split('$')[1]
         owner_2 = soup.find_all('p')[4].get_text(separator="$").split('$')[1]
