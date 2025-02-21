@@ -30,7 +30,7 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
             p[property_.property_number],
 
             h3["Ejere"],
-            (p[str(owner)] for owner in owners),
+            (p[" | ".join(owner)] for owner in owners),
 
             h3["Indefrossen grundskyld"],
             _create_list(frozen_debt) if frozen_debt else p["Ingen poster"],
