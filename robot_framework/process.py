@@ -11,7 +11,7 @@ from itk_dev_shared_components.graph import mail as graph_mail
 from bs4 import BeautifulSoup
 
 from robot_framework import config
-from robot_framework.sub_process import structura_process, sap_process, mail_process
+from robot_framework.sub_process import structura_process, sap_process, mail_process, go_process
 
 
 def process(orchestrator_connection: OrchestratorConnection) -> None:
@@ -28,7 +28,6 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     session = multi_session.get_all_sap_sessions()[0]
     receivers = json.loads(orchestrator_connection.process_arguments)["receivers"]
 
-
     for task in tasks:
         properties = structura_process.find_property(task.address)
         for property_ in properties:
@@ -44,6 +43,12 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             )
 
             mail_process.send_email(receivers, task.address, body)
+
+            go_login, go_password = orchestrator_connection.get_credential(config.GO_CREDENTIALS)
+            file_bytearray = bytearray(body)
+            session = go_process.create_session(go_login, go_password)
+            case, session = go_process.create_case(config.GO_API, "title", session)
+            go_process.upload_document(session=session, apiurl=config.GO_API, file=file_bytearray, case=case.title, filename="Svar_på_forespørgsel.txt")
 
         graph_mail.delete_email(task.mail, graph_access)
 
