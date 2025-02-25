@@ -52,7 +52,7 @@ def find_property(address: str) -> list[Property]:
     # Get results
     result = []
 
-    tree = structura.TreeControl(AutomationId="treeView", searchDepth=6).GetChildren()[0]
+    tree = structura.TreeControl(AutomationId="treeView", searchDepth=6).TreeItemControl(1, 0.5)
     children: list[uiautomation.TreeItemControl] = tree.GetChildren()
     for c in children:
         if _match_address_result(address, c.Name):
