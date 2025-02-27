@@ -2,6 +2,7 @@
 
 import json
 from urllib.parse import urljoin
+from typing import Literal
 
 from requests import Session
 from requests_ntlm import HttpNtlmAuth
@@ -76,7 +77,7 @@ def delete_document(apiurl: str, document_id: int, session: Session) -> tuple[st
     return response.text, session
 
 
-def create_case(apiurl: str, title: str, session: Session) -> tuple[str, Session]:
+def create_case(session: Session, apiurl: str, title: str, case_type: str = Literal["EMN", "GEO"]) -> tuple[str, Session]:
     """Create a case in GetOrganized.
 
     Args:
@@ -89,7 +90,7 @@ def create_case(apiurl: str, title: str, session: Session) -> tuple[str, Session
     """
     url = urljoin(apiurl, "/_goapi/Cases/")
     payload = {
-        'CaseTypePrefix': 'EMN',
+        'CaseTypePrefix': case_type,
         'MetadataXml': f'<z:row xmlns:z="#RowsetSchema" ows_Title="{title}" ows_CaseStatus="Åben"/>',
         'ReturnWhenCaseFullyCreated': False
     }

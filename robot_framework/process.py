@@ -47,7 +47,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             go_login, go_password = orchestrator_connection.get_credential(config.GO_CREDENTIALS)
             file_bytearray = bytearray(body)
             session = go_process.create_session(go_login, go_password)
-            case, session = go_process.create_case(config.GO_API, "title", session)
+            case, session = go_process.create_case(config.GO_API, "title", session, "GEO")
             go_process.upload_document(session=session, apiurl=config.GO_API, file=file_bytearray, case=case.title, filename="Svar_på_forespørgsel.txt")
 
         graph_mail.delete_email(task.mail, graph_access)
