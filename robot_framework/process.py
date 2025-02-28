@@ -1,6 +1,7 @@
 """This module contains the main process of the robot."""
 
 from dataclasses import dataclass
+from requests import Session
 import json
 import os
 
@@ -25,15 +26,20 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     if not tasks:
         return
 
-    session = multi_session.get_all_sap_sessions()[0]
+    sap_session = multi_session.get_all_sap_sessions()[0]
     receivers = json.loads(orchestrator_connection.process_arguments)["receivers"]
+    
+    # Initialize GO session
+    go_creds = orchestrator_connection.get_credential(config.GO_CREDENTIALS)
+    go_session = go_process.create_session(go_creds.username, go_creds.password)
 
     for task in tasks:
         properties = structura_process.find_property(task.address)
         for property_ in properties:
+
             owners = structura_process.get_owners(property_.property_number, task.search_words)
             frozen_debt = structura_process.get_frozen_debt(property_.property_number)
-            missing_payments = [sap_process.get_property_debt(session, cpr, name, property_.property_number) for cpr, name in owners]
+            missing_payments = [sap_process.get_property_debt(sap_session, cpr, name, property_.property_number) for cpr, name in owners]
 
             body = mail_process.format_results(
                 property_=property_,
@@ -44,13 +50,15 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
             mail_process.send_email(receivers, task.address, body)
 
-            go_login, go_password = orchestrator_connection.get_credential(config.GO_CREDENTIALS)
-            file_bytearray = bytearray(body)
-            session = go_process.create_session(go_login, go_password)
-            case, session = go_process.create_case(session, config.GO_API, "title", "GEO")
-            go_process.upload_document(session=session, apiurl=config.GO_API, file=file_bytearray, case=case.title, filename="Svar_på_forespørgsel.txt")
+            # Create GO case and upload incoming request
+            go_case, go_session = go_process.create_case(go_session, config.GO_API, f"{task.address}, {property_.property_number}", "GEO")
+            go_case_id = json.loads(go_case)['CaseID']
+            upload_and_journalize_doc(graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), go_case_id, go_session, f"{task.address}.eml")
+            # Upload outgoing response
+            upload_and_journalize_doc(bytearray(body, encoding="utf-8"), go_case_id, go_session, f"Ejendomsoplysning {task.address}.txt")
 
         graph_mail.delete_email(task.mail, graph_access)
+        # go_process.close_case(apiurl=config.GO_API, case_number=go_case_id, session=go_session) # TODO: When documents are finalized and all data good, close cases
 
 
 @dataclass
@@ -88,8 +96,13 @@ def get_email_tasks(graph_access) -> list[Task]:
     return tasks
 
 
+def upload_and_journalize_doc(bytearray: bytearray, go_case_id: str, session: Session, filename: str):
+    document, session = go_process.upload_document(session=session, apiurl=config.GO_API, file=bytearray, case=go_case_id, filename=filename)
+    # go_process.finalize_document(config.GO_API, json.loads(document)["DocId"], session) # TODO: This doesn't work for some reason
+
+
 if __name__ == '__main__':
     conn_string = os.getenv("OpenOrchestratorConnString")
     crypto_key = os.getenv("OpenOrchestratorKey")
-    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": []}')
+    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["ejendomsskat@aarhus.dk"]}')
     process(oc)
