@@ -66,7 +66,7 @@ def get_email_tasks(graph_access) -> list[Task]:
         A list of Task object based on the found emails.
     """
     mails = graph_mail.get_emails_from_folder("itk-rpa@mkb.aarhus.dk", "Indbakke/Ejendomsbeskatning", graph_access)
-    mails = [mail for mail in mails if mail.sender == 'noreply@aarhus.dk' and mail.subject == 'Forespørgsler til Ejendomsbeskatning (fra Selvbetjening.aarhuskommune.dk)']
+    mails = [mail for mail in mails if mail.sender == 'noreply@aarhus.dk' and 'Forespørgsler til Ejendomsbeskatning' in mail.subject]
 
     tasks = []
 
