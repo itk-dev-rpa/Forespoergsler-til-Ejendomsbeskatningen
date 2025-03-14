@@ -15,7 +15,7 @@ SCREENSHOT_SENDER = "robot@friend.dk"
 ERROR_EMAIL = "Error Email"
 GRAPH_API = "Graph API"
 STRUCTURA_LOGIN = "KMD Ejendomsbeskatning"
-SAP_LOGIN = "SAP Ejendomsbeskatning"  # TODO
+SAP_LOGIN = "SAP Ejendomsbeskatning"
 
 # GetOrganized
 GO_API = "https://ad.go.aarhuskommune.dk"
