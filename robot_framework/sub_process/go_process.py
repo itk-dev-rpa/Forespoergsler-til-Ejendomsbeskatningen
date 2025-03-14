@@ -108,7 +108,7 @@ def case_metadata(session: Session, apiurl: str, case_id: str):
         case_id: Case ID to get metadata on.
 
     Returns:
-        Response object and session object.
+        Return the response and session objects.
     """
     url = urljoin(apiurl, f"/_goapi/Cases/Metadata/{case_id}")
     response = session.get(url, timeout=config.GO_TIMEOUT)
@@ -129,25 +129,6 @@ def close_case(apiurl: str, case_number: str, session: Session) -> tuple[str, Se
     """
     url = urljoin(apiurl, "/_goapi/Cases/CloseCase")
     payload = {"CaseId": case_number}
-    response = session.post(url, data=payload, timeout=config.GO_TIMEOUT)
-    response.raise_for_status()
-    return response.text, session
-
-
-def finalize_document(apiurl: str, doc_id: int, session: Session) -> tuple[str, Session]:
-    """Finalize a document in GetOrganized.
-
-    Args:
-        apiurl: URL for GetOrganized API.
-        doc_id: ID of document to journalize.
-        session: Session token for connection.
-
-    Returns:
-        Response text and updated session token.
-    """
-    # This apparently doesn't do anything?
-    url = urljoin(apiurl, "/_goapi/Documents/Finalize/ByDocumentId")
-    payload = {"DocId": doc_id}
     response = session.post(url, data=payload, timeout=config.GO_TIMEOUT)
     response.raise_for_status()
     return response.text, session

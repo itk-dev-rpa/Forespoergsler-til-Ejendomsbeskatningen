@@ -3,7 +3,6 @@ import json
 import os
 
 from dataclasses import dataclass
-from requests import Session
 
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from itk_dev_shared_components.sap import multi_session
@@ -53,9 +52,9 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             # Create GO case and upload incoming request
             go_case, go_session = go_process.create_case(go_session, config.GO_API, f"{task.address}, {property_.property_number}", "GEO")
             go_case_id = json.loads(go_case)['CaseID']
-            upload_and_journalize_doc(graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), go_case_id, go_session, f"{task.address}.eml")
+            go_process.upload_document(session=go_session, apiurl=config.GO_API, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
             # Upload outgoing response
-            upload_and_journalize_doc(bytearray(body, encoding="utf-8"), go_case_id, go_session, f"Ejendomsoplysning {task.address}.txt")
+            go_process.upload_document(session=go_session, apiurl=config.GO_API, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.txt")
 
         graph_mail.delete_email(task.mail, graph_access)
         go_process.close_case(apiurl=config.GO_API, case_number=go_case_id, session=go_session)
@@ -94,19 +93,6 @@ def get_email_tasks(graph_access) -> list[Task]:
         tasks.append(Task(address, search_words, mail))
 
     return tasks
-
-
-def upload_and_journalize_doc(file_bytes: bytearray, go_case_id: str, session: Session, filename: str):
-    """Upload document and journalize by "finalizing" the document - according to the API this is the correct method, but journalizing doesn't work, need revision.
-
-    Args:
-        file_bytes: Document as a bytearray.
-        go_case_id: GetOrganized case ID to upload document to.
-        session: Session token.
-        filename: Filename to use for saving the file.
-    """
-    document, session = go_process.upload_document(session=session, apiurl=config.GO_API, file=file_bytes, case=go_case_id, filename=filename)
-    go_process.finalize_document(config.GO_API, json.loads(document)["DocId"], session)
 
 
 if __name__ == '__main__':
