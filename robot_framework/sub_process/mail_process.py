@@ -1,6 +1,6 @@
 """This module is responsible for sending results as emails."""
 
-from htpy import html, body, h3, p, ul, li, Element  # pylint: disable=no-name-in-module
+from htpy import html, body, h3, p, ul, li, Element, div  # pylint: disable=no-name-in-module
 
 from itk_dev_shared_components.smtp import smtp_util
 
@@ -9,8 +9,14 @@ from robot_framework.sub_process.sap_process import MissingPaymentPerson
 from robot_framework.sub_process.structura_process import Property
 
 
+def join_email_divs(div_list: list[str]) -> str:
+    """Join multiple div to a single html document string."""
+    html_body = html[body[[[div[s] for s in div_list]]]]
+    return str(html_body)
+
+
 def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson], go_case_id: str) -> str:
-    """Format inputs as a neat html body.
+    """Format inputs as a neat html div.
 
     Args:
         property: The property object.
@@ -20,31 +26,29 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
         go_case_id: The id of the created case in Get Organised.
 
     Returns:
-        A string containing the full html body.
+        A string containing the html div.
     """
-    html_body = html[
-        body[
-            h3["Beliggenhed"],
-            p[property_.location],
+    body_div = div[
+        h3["Beliggenhed"],
+        p[property_.location],
 
-            h3["Ejendomsnummer"],
-            p[property_.property_number],
+        h3["Ejendomsnummer"],
+        p[property_.property_number],
 
-            h3["Sagsummer i Get Organised"],
-            p[go_case_id],
+        h3["Sagsummer i Get Organised"],
+        p[go_case_id],
 
-            h3["Ejere"],
-            (p[" | ".join(owner)] for owner in owners),
+        h3["Ejere"],
+        (p[" | ".join(owner)] for owner in owners),
 
-            h3["Indefrossen grundskyld"],
-            _create_list(frozen_debt) if frozen_debt else p["Ingen poster"],
+        h3["Indefrossen grundskyld"],
+        _create_list(frozen_debt) if frozen_debt else p["Ingen poster"],
 
-            h3["Udeståender i SAP"],
-            _format_missing_payments(missing_payments)
-        ]
+        h3["Udeståender i SAP"],
+        _format_missing_payments(missing_payments)
     ]
 
-    return str(html_body)
+    return str(body_div)
 
 
 def _create_list(content: list) -> Element:
