@@ -76,10 +76,10 @@ def _format_missing_payments(missing_payments: list[MissingPaymentPerson]) -> El
                             c.title,
                             _create_list(c.entries) if c.entries else _create_list(["Ingen poster"]),
                         ]
-                    for c in p.cases)
+                        for c in p.cases)
                 ]
             ]
-        for p in missing_payments)
+            for p in missing_payments)
     ]
 
 
