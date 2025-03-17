@@ -87,6 +87,6 @@ def close_case(case_number: str, session: Session) -> str:
     """
     url = urljoin(config.GO_API, "/_goapi/Cases/CloseCase")
     payload = {"CaseId": case_number}
-    response = session.post(url, data=payload, timeout=60)
+    response = session.post(url, data=payload, timeout=config.GO_TIMEOUT)
     response.raise_for_status()
     return response.text
