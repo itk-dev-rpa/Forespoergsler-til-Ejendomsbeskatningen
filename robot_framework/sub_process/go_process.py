@@ -12,7 +12,6 @@ def create_session(username: str, password: str) -> Session:
     """Create a session for accessing GetOrganized API.
 
     Args:
-        apiurl: URL for the API.
         username: Username for login.
         password: Password for login.
 
