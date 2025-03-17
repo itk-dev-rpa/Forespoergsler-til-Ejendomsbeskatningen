@@ -2,7 +2,6 @@
 
 import json
 from urllib.parse import urljoin
-from typing import Literal
 
 from requests import Session
 from requests_ntlm import HttpNtlmAuth
@@ -26,33 +25,31 @@ def create_session(username: str, password: str) -> Session:
     return session
 
 
-def create_case(session: Session, apiurl: str, title: str, case_type: str = Literal["EMN", "GEO"]) -> tuple[str, Session]:
+def create_case(session: Session, title: str) -> str:
     """Create a case in GetOrganized.
 
     Args:
-        apiurl: Url for the GetOrganized API.
         session: Session object to access API.
         title: Title of the case being created.
 
     Returns:
         Return the response and session objects.
     """
-    url = urljoin(apiurl, "/_goapi/Cases/")
+    url = urljoin(config.GO_API, "/_goapi/Cases/")
     payload = {
-        'CaseTypePrefix': case_type,
+        'CaseTypePrefix': "GEO",
         'MetadataXml': f'<z:row xmlns:z="#RowsetSchema" ows_Title="{title}" ows_CaseStatus="Åben" ows_CaseCategory="Åben for alle" ows_Afdeling="916;#Backoffice - Drift og Økonomi" ows_KLENummer="318;#25.02.00 Ejendomsbeskatning i almindelighed"/>',
         'ReturnWhenCaseFullyCreated': False
     }
     response = session.post(url, data=json.dumps(payload), timeout=config.GO_TIMEOUT)
     response.raise_for_status()
-    return response.text, session
+    return response.text
 
 
-def upload_document(*, apiurl: str, file: bytearray, case: str, filename: str, agent_name: str | None = None, date_string: str | None = None, session: Session, doc_category: str | None = None) -> tuple[str, Session]:
+def upload_document(*, file: bytearray, case: str, filename: str, agent_name: str | None = None, date_string: str | None = None, session: Session, doc_category: str | None = None) -> str:
     """Upload a document to Get Organized.
 
     Args:
-        apiurl: Base url for API.
         session: Session token for request.
         file: Bytearray of file to upload.
         case: Case name already present in GO.
@@ -63,11 +60,11 @@ def upload_document(*, apiurl: str, file: bytearray, case: str, filename: str, a
     Returns:
         Return response text and session token.
     """
-    url = apiurl + "/_goapi/Documents/AddToCase"
+    url = config.GO_API + "/_goapi/Documents/AddToCase"
     payload = {
         "Bytes": list(file),
         "CaseId": case,
-        "SiteUrl": urljoin(apiurl, f"/cases/EMN/{case}"),
+        "SiteUrl": urljoin(config.GO_API, f"/cases/EMN/{case}"),
         "ListName": "Dokumenter",
         "FolderPath": agent_name,
         "FileName": filename,
@@ -76,4 +73,21 @@ def upload_document(*, apiurl: str, file: bytearray, case: str, filename: str, a
     }
     response = session.post(url, data=json.dumps(payload), timeout=config.GO_TIMEOUT)
     response.raise_for_status()
-    return response.text, session
+    return response.text
+
+
+def close_case(case_number: str, session: Session) -> str:
+    """Close a case in GetOrganized.
+
+    Args:
+        session: Session object to access API.
+        case_number: Case number of case to be closed.
+
+    Returns:
+        Return the response and session objects.
+    """
+    url = urljoin(config.GO_API, "/_goapi/Cases/CloseCase")
+    payload = {"CaseId": case_number}
+    response = session.post(url, data=payload, timeout=60)
+    response.raise_for_status()
+    return response.text
