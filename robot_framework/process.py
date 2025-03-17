@@ -50,14 +50,14 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             mail_process.send_email(receivers, task.address, body)
 
             # Create GO case and upload incoming request
-            go_case, go_session = go_process.create_case(go_session, config.GO_API, f"{task.address}, {property_.property_number}", "GEO")
+            go_case, go_session = go_process.create_case(go_session, f"{task.address}, {property_.property_number}")
             go_case_id = json.loads(go_case)['CaseID']
-            go_process.upload_document(session=go_session, apiurl=config.GO_API, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
+            go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
             # Upload outgoing response
-            go_process.upload_document(session=go_session, apiurl=config.GO_API, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.txt")
+            go_process.upload_document(session=go_session, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.txt")
 
         graph_mail.delete_email(task.mail, graph_access)
-        go_process.close_case(apiurl=config.GO_API, case_number=go_case_id, session=go_session)
+        go_process.close_case(case_number=go_case_id, session=go_session)
 
 
 @dataclass
