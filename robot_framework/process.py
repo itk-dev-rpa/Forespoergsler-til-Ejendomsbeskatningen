@@ -40,7 +40,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
         properties = structura_process.find_property(task.address)
 
         # Create GO case and upload incoming request
-        go_case = go_process.create_case(go_session, f"{task.address}, {" - ".join(p.property_number for p in properties)}")
+        go_case = go_process.create_case(go_session, f"{task.address}, {' - '.join(p.property_number for p in properties)}")
         go_case_id = json.loads(go_case)['CaseID']
         go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
         orchestrator_connection.log_info(f"GO case created: {go_case_id}")
