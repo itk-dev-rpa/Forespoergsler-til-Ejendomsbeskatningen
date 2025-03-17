@@ -16,3 +16,8 @@ ERROR_EMAIL = "Error Email"
 GRAPH_API = "Graph API"
 STRUCTURA_LOGIN = "KMD Ejendomsbeskatning"
 SAP_LOGIN = "SAP Ejendomsbeskatning"
+
+# GetOrganized
+GO_API = "https://ad.go.aarhuskommune.dk"
+GO_CREDENTIALS = "GetOrganized Login"
+GO_TIMEOUT = 60
