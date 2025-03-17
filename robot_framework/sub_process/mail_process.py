@@ -9,7 +9,7 @@ from robot_framework.sub_process.sap_process import MissingPaymentPerson
 from robot_framework.sub_process.structura_process import Property
 
 
-def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
+def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson], go_case_id: str) -> str:
     """Format inputs as a neat html body.
 
     Args:
@@ -17,6 +17,7 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
         owners: A list of owners as tuples of cpr and names.
         frozen_debt: Frozen debt as a list of string tuples.
         missing_payments: A list of Person objects.
+        go_case_id: The id of the created case in Get Organised.
 
     Returns:
         A string containing the full html body.
@@ -28,6 +29,9 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
 
             h3["Ejendomsnummer"],
             p[property_.property_number],
+
+            h3["Sagsummer i Get Organised"],
+            p[go_case_id],
 
             h3["Ejere"],
             (p[" | ".join(owner)] for owner in owners),
