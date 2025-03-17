@@ -23,7 +23,10 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
     tasks = get_email_tasks(graph_access)
     if not tasks:
+        orchestrator_connection.log_info("No tasks in email folder.")
         return
+
+    orchestrator_connection.log_info(f"Number of email tasks: {len(tasks)}")
 
     sap_session = multi_session.get_all_sap_sessions()[0]
     receivers = json.loads(orchestrator_connection.process_arguments)["receivers"]
@@ -33,29 +36,40 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     go_session = go_process.create_session(go_creds.username, go_creds.password)
 
     for task in tasks:
+        orchestrator_connection.log_info(f"Searching info on {task.address}")
         properties = structura_process.find_property(task.address)
-        for property_ in properties:
 
+        # Create GO case and upload incoming request
+        go_case = go_process.create_case(go_session, f"{task.address}, {" - ".join(p.property_number for p in properties)}")
+        go_case_id = json.loads(go_case)['CaseID']
+        go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
+        orchestrator_connection.log_info(f"GO case created: {go_case_id}")
+
+        html_div_list = []
+
+        for property_ in properties:
+            orchestrator_connection.log_info(f"Searching on property {property_.property_number}")
             owners = structura_process.get_owners(property_.property_number, task.search_words)
             frozen_debt = structura_process.get_frozen_debt(property_.property_number)
             missing_payments = [sap_process.get_property_debt(sap_session, cpr, name, property_.property_number) for cpr, name in owners]
 
-            body = mail_process.format_results(
+            # Format results as an html div
+            html_div = mail_process.format_results(
                 property_=property_,
                 owners=owners,
                 frozen_debt=frozen_debt,
-                missing_payments=missing_payments
+                missing_payments=missing_payments,
+                go_case_id=go_case_id
             )
+            html_div_list.append(html_div)
 
-            mail_process.send_email(receivers, task.address, body)
+        # Join all result html divs and send as email
+        html_body = mail_process.join_email_divs(html_div_list)
+        mail_process.send_email(receivers, task.address, html_body)
+        orchestrator_connection.log_info("Email sent")
 
-            # Create GO case and upload incoming request
-            go_case, go_session = go_process.create_case(go_session, f"{task.address}, {property_.property_number}")
-            go_case_id = json.loads(go_case)['CaseID']
-            go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
-            # Upload outgoing response
-            go_process.upload_document(session=go_session, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.html")
-
+        # Upload mail to GO
+        go_process.upload_document(session=go_session, file=bytearray(html_body, encoding="utf-8"), case=go_case_id, filename=f"Email fra RPA - Ejendomsoplysning {task.address}.html")
         graph_mail.delete_email(task.mail, graph_access)
 
 
