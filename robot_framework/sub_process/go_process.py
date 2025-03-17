@@ -73,20 +73,3 @@ def upload_document(*, file: bytearray, case: str, filename: str, agent_name: st
     response = session.post(url, data=json.dumps(payload), timeout=config.GO_TIMEOUT)
     response.raise_for_status()
     return response.text
-
-
-def close_case(case_number: str, session: Session) -> str:
-    """Close a case in GetOrganized.
-
-    Args:
-        session: Session object to access API.
-        case_number: Case number of case to be closed.
-
-    Returns:
-        Return the response and session objects.
-    """
-    url = urljoin(config.GO_API, "/_goapi/Cases/CloseCase")
-    payload = {"CaseId": case_number}
-    response = session.post(url, data=payload, timeout=config.GO_TIMEOUT)
-    response.raise_for_status()
-    return response.text

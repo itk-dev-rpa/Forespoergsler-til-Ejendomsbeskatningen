@@ -57,7 +57,6 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             go_process.upload_document(session=go_session, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.txt")
 
         graph_mail.delete_email(task.mail, graph_access)
-        go_process.close_case(case_number=go_case_id, session=go_session)
 
 
 @dataclass
