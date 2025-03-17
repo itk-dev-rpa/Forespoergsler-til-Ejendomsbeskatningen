@@ -54,7 +54,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             go_case_id = json.loads(go_case)['CaseID']
             go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
             # Upload outgoing response
-            go_process.upload_document(session=go_session, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.txt")
+            go_process.upload_document(session=go_session, file=bytearray(body, encoding="utf-8"), case=go_case_id, filename=f"Ejendomsoplysning {task.address}.html")
 
         graph_mail.delete_email(task.mail, graph_access)
 
