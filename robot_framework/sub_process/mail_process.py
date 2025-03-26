@@ -15,7 +15,7 @@ def join_email_divs(div_list: list[str]) -> str:
     return str(html_body)
 
 
-def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson], go_case_id: str) -> str:
+def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
     """Format inputs as a neat html div.
 
     Args:
@@ -34,9 +34,6 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
 
         h3["Ejendomsnummer"],
         p[property_.property_number],
-
-        h3["Sagsummer i Get Organised"],
-        p[go_case_id],
 
         h3["Ejere"],
         (p[" | ".join(owner)] for owner in owners),
@@ -91,7 +88,7 @@ def _format_missing_payments(missing_payments: list[MissingPaymentPerson]) -> El
     ]
 
 
-def send_email(receivers: list[str], address: str, html_body: str):
+def send_email(receivers: list[str], address: str, go_case_id: str, html_body: str):
     """Send an email to the given list of receivers.
 
     Args:
@@ -102,7 +99,7 @@ def send_email(receivers: list[str], address: str, html_body: str):
     smtp_util.send_email(
         receiver=receivers,
         sender="itk-rpa@mkb.aarhus.dk",
-        subject=f"Ejendomsoplysning: {address}",
+        subject=f"Ejendomsoplysning: {address}, {go_case_id}",
         body=html_body,
         html_body=True,
         smtp_server=config.SMTP_SERVER,

@@ -39,12 +39,6 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
         orchestrator_connection.log_info(f"Searching info on {task.address}")
         properties = structura_process.find_property(task.address)
 
-        # Create GO case and upload incoming request
-        go_case = go_process.create_case(go_session, f"{task.address}, {' - '.join(p.property_number for p in properties)}")
-        go_case_id = json.loads(go_case)['CaseID']
-        go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"{task.address}.eml")
-        orchestrator_connection.log_info(f"GO case created: {go_case_id}")
-
         html_div_list = []
 
         for property_ in properties:
@@ -58,14 +52,19 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
                 property_=property_,
                 owners=owners,
                 frozen_debt=frozen_debt,
-                missing_payments=missing_payments,
-                go_case_id=go_case_id
+                missing_payments=missing_payments
             )
             html_div_list.append(html_div)
 
+        # Create GO case and upload incoming request
+        go_case = go_process.create_case(go_session, f"{task.address}, {' - '.join(p.property_number for p in properties)}")
+        go_case_id = json.loads(go_case)['CaseID']
+        go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address}.eml")
+        orchestrator_connection.log_info(f"GO case created: {go_case_id}")
+
         # Join all result html divs and send as email
         html_body = mail_process.join_email_divs(html_div_list)
-        mail_process.send_email(receivers, task.address, html_body)
+        mail_process.send_email(receivers, task.address, go_case_id, html_body)
         orchestrator_connection.log_info("Email sent")
 
         # Upload mail to GO
