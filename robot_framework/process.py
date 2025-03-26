@@ -43,7 +43,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
         for property_ in properties:
             orchestrator_connection.log_info(f"Searching on property {property_.property_number}")
-            owners = structura_process.get_owners(property_.property_number, task.search_words)
+            owners = structura_process.get_owners(property_.property_number, task.owner_1, task.owner_2)
             frozen_debt = structura_process.get_frozen_debt(property_.property_number)
             missing_payments = [sap_process.get_property_debt(sap_session, cpr, name, property_.property_number) for cpr, name in owners]
 
@@ -76,7 +76,8 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 class Task:
     """A dataclass representing an email task."""
     address: str
-    search_words: list[str]
+    owner_1: str
+    owner_2: str
     mail: graph_mail.Email
 
 
@@ -100,9 +101,7 @@ def get_email_tasks(graph_access) -> list[Task]:
         owner_1 = soup.find_all('p')[3].get_text(separator="$").split('$')[1]
         owner_2 = soup.find_all('p')[4].get_text(separator="$").split('$')[1]
 
-        search_words = owner_1.split() + owner_2.split()
-
-        tasks.append(Task(address, search_words, mail))
+        tasks.append(Task(address, owner_1, owner_2, mail))
 
     return tasks
 

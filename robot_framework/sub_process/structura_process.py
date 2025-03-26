@@ -5,6 +5,7 @@ import time
 from dataclasses import dataclass
 import subprocess
 import os
+import difflib
 
 import uiautomation
 from uiautomation import Keys, WindowVisualState
@@ -98,12 +99,13 @@ def _match_address_result(address: str, result: str) -> bool:
     return len(matches) == 1
 
 
-def get_owners(property_number: str, search_words: list[str]) -> list[tuple[str, str]]:
+def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[str, str]]:
     """Get the cpr numbers and names of the owners of the given property on the given date.
 
     Args:
         property_number: The property to look up.
-        check_date: The date which to look for ownership.
+        owner_1: Name of the first owner to find.
+        owner_2: Name of the second owner to find.
 
     Raises:
         LookupError: If no owners could be found on the given date.
@@ -127,7 +129,7 @@ def get_owners(property_number: str, search_words: list[str]) -> list[tuple[str,
     tree.TreeItemControl(RegexName=f"0*{property_number},").GetSelectionItemPattern().Select()
     structura.ButtonControl(Name="Hent alle oplysninger", searchDepth=2).GetInvokePattern().Invoke()
 
-    owners = []
+    # Find owners
 
     owners_group = tree.TreeItemControl(Name="Aktuelle ejere")
     owners_group.GetExpandCollapsePattern().Expand()
@@ -137,12 +139,22 @@ def get_owners(property_number: str, search_words: list[str]) -> list[tuple[str,
     owners_group.GetExpandCollapsePattern().Expand()
     owner_elements += owners_group.GetChildren()
 
-    for owner_element in owner_elements:
-        if any(word.lower() in owner_element.Name.lower() for word in search_words):
-            owner_element.GetSelectionItemPattern().Select()
-            cpr = structura.EditControl(AutomationId="textBoxCprCvr").GetValuePattern().Value
-            name = structura.EditControl(AutomationId="textBoxNavn").GetValuePattern().Value
-            owners.append((cpr, name))
+    # Get all names on the list
+    names = [owner_element.Name.split(",")[0] for owner_element in owner_elements]
+
+    owners = []
+
+    for owner in (owner_1, owner_2):
+        owner_matches = difflib.get_close_matches(owner, names, n=1)
+        if not owner_matches:
+            continue
+
+        index = names.index(owner_matches[0])
+        owner_element = owner_elements[index]
+        owner_element.GetSelectionItemPattern().Select()
+        cpr = structura.EditControl(AutomationId="textBoxCprCvr").GetValuePattern().Value
+        name = structura.EditControl(AutomationId="textBoxNavn").GetValuePattern().Value
+        owners.append((cpr, name))
 
     return owners
 
