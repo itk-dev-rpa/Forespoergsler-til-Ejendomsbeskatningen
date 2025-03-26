@@ -189,7 +189,9 @@ def get_frozen_debt(property_number: str) -> list[tuple[str, str, str, str]]:
             structura.ComboBoxControl(AutomationId="comboBoxLaanebevaegelserFilter").SendKey(Keys.VK_UP)
 
             row = structura.TableControl(AutomationId="gridControlLaanebevaegelser").CustomControl(Name="Row 1")
+            row.SendKey(Keys.VK_HOME)
             date_ = row.DataItemControl(Name="Forfaldsdato row0").GetValuePattern().Value
+            row.SendKey(Keys.VK_END)
             amount = row.DataItemControl(Name="Saldo row0").GetValuePattern().Value
 
             data.append((cpr, name, date_, amount))
