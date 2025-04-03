@@ -18,6 +18,15 @@ class Property:
     location: str
 
 
+@dataclass
+class FrozenDebt:
+    cpr: str
+    name: str
+    date_: str
+    amount: str
+    status: str
+
+
 def find_property(address: str) -> list[Property]:
     """Find the properties that match the given address.
     It's important the address i properly formatted according to Danish standards.
@@ -113,21 +122,10 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
     Returns:
         A list of tuples of cpr numbers and names.
     """
-    # New search
+    _search_property(property_number)
+
     structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
-    structura.ButtonControl(Name="ESR", searchDepth=6).GetInvokePattern().Invoke()
-    structura.ButtonControl(Name="Ny Søgning", searchDepth=2).GetInvokePattern().Invoke()
-
-    # Search
-    search_view = structura.PaneControl(AutomationId="SoegningView", searchDepth=7)
-    ejendom_pane = search_view.PaneControl(AutomationId="collapsGroupEjendom")
-    ejendom_pane.EditControl(AutomationId="textBoxEjdNr", searchDepth=1).GetValuePattern().SetValue(property_number)
-    search_view.ButtonControl(AutomationId="soegBtn").GetInvokePattern().Invoke()
-
-    # Get info
     tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
-    tree.TreeItemControl(RegexName=f"0*{property_number},").GetSelectionItemPattern().Select()
-    structura.ButtonControl(Name="Hent alle oplysninger", searchDepth=2).GetInvokePattern().Invoke()
 
     # Find owners
 
@@ -159,11 +157,12 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
     return owners
 
 
-def get_frozen_debt(property_number: str) -> list[tuple[str, str, str, str]]:
+def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenDebt]:
     """Gets the frozen debt on the given property.
 
     Args:
         property_number: The number of the property.
+        owner_cprs: A list of the owners cpr numbers.
 
     Returns:
         A list of tuples containing [cpr, name, date, amount].
@@ -190,7 +189,8 @@ def get_frozen_debt(property_number: str) -> list[tuple[str, str, str, str]]:
     data = []
 
     for item in result_items:
-        if "(Accepteret med indefrysning)" in item.Name:
+        if (any(t in item.Name for t in ("(Accepteret med indefrysning)", "(Indfriet)"))
+                and any(cpr in item.Name for cpr in owner_cprs)):
             item.GetSelectionItemPattern().Select()
 
             sag_tab.GetSelectionItemPattern().Select()
@@ -206,9 +206,66 @@ def get_frozen_debt(property_number: str) -> list[tuple[str, str, str, str]]:
             row.SendKey(Keys.VK_END)
             amount = row.DataItemControl(Name="Saldo row0").GetValuePattern().Value
 
-            data.append((cpr, name, date_, amount))
+            if "(Accepteret med indefrysning)" in item.Name:
+                status = "Accepteret med indefrysning"
+            elif "(Indfriet)" in item.Name:
+                status = row.DataItemControl(Name="Tekst row0").GetValuePattern().Value
+
+            data.append(FrozenDebt(cpr, name, date_, amount, status))
+    return data
+
+
+def get_tax_data(property_number: str) -> list[tuple[str, str]]:
+    """"""
+    _search_property(property_number)
+
+    structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
+    tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
+
+    # Expand 'Skatter' and select last element
+    tax_group = tree.TreeItemControl(Name="Skatter")
+    tax_group.GetExpandCollapsePattern().Expand()
+    tax_elements: list[uiautomation.TreeItemControl] = tax_group.GetChildren()
+    tax_elements[-1].GetSelectionItemPattern().Select()
+
+    # Read tax table
+    data = []
+
+    tax_table = structura.TableControl(AutomationId="dataGridViewBidrag", searchDepth=13)
+    for row in range(tax_table.GetGridPattern().RowCount):
+        text = tax_table.EditControl(Name=f"Tekst Række {row}").GetValuePattern().Value
+        if text == ".":
+            break
+        amount = tax_table.EditControl(Name=f"Ydelse Række {row}").GetValuePattern().Value
+        data.append((text, amount))
+
+    # Calculate sum
+    sum = 0
+    for _, amount in data:
+        sum += float(amount.replace(".", "").replace(",", "."))
+    sum = round(sum, 2)
+    data.append(("Sum", f"{sum:.2f}".replace(".",",")))
 
     return data
+
+
+def _search_property(property_number: str):
+    """Search for a property and click 'Hent alle oplysninger'."""
+    # New search
+    structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
+    structura.ButtonControl(Name="ESR", searchDepth=6).GetInvokePattern().Invoke()
+    structura.ButtonControl(Name="Ny Søgning", searchDepth=2).GetInvokePattern().Invoke()
+
+    # Search
+    search_view = structura.PaneControl(AutomationId="SoegningView", searchDepth=7)
+    ejendom_pane = search_view.PaneControl(AutomationId="collapsGroupEjendom")
+    ejendom_pane.EditControl(AutomationId="textBoxEjdNr", searchDepth=1).GetValuePattern().SetValue(property_number)
+    search_view.ButtonControl(AutomationId="soegBtn").GetInvokePattern().Invoke()
+
+    # Get info
+    tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
+    tree.TreeItemControl(RegexName=f"0*{property_number},").GetSelectionItemPattern().Select()
+    structura.ButtonControl(Name="Hent alle oplysninger", searchDepth=2).GetInvokePattern().Invoke()
 
 
 def open_structura(username: str, password: str):

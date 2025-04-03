@@ -6,7 +6,7 @@ from itk_dev_shared_components.smtp import smtp_util
 
 from robot_framework import config
 from robot_framework.sub_process.sap_process import MissingPaymentPerson
-from robot_framework.sub_process.structura_process import Property
+from robot_framework.sub_process.structura_process import Property, FrozenDebt
 
 
 def join_email_divs(div_list: list[str]) -> str:
@@ -15,7 +15,7 @@ def join_email_divs(div_list: list[str]) -> str:
     return str(html_body)
 
 
-def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[tuple[str, str, str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
+def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[FrozenDebt], tax_data: list[tuple[str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
     """Format inputs as a neat html div.
 
     Args:
@@ -38,8 +38,11 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
         h3["Ejere"],
         (p[" | ".join(owner)] for owner in owners),
 
-        h3["Indefrossen grundskyld"],
-        _create_list(frozen_debt) if frozen_debt else p["Ingen poster"],
+        h3["I-Lån"],
+        _format_frozen_debt(frozen_debt),
+
+        h3["Skattebidrag"],
+        _create_list(tax_data),
 
         h3["Udeståender i SAP"],
         _format_missing_payments(missing_payments)
@@ -60,6 +63,14 @@ def _create_list(content: list) -> Element:
             s = str(v)
         result.append(li[s])
     return ul[result]
+
+
+def _format_frozen_debt(frozen_debt: list[FrozenDebt]) -> Element:
+    """Helper function for creating a list of frozen debt."""
+    if not frozen_debt:
+        return _create_list(["Ingen poster"])
+    frozen_debt_list = [[f.cpr, f.name, f.date_, f.amount, f.status] for f in frozen_debt]
+    return _create_list(frozen_debt_list)
 
 
 def _format_missing_payments(missing_payments: list[MissingPaymentPerson]) -> Element:
