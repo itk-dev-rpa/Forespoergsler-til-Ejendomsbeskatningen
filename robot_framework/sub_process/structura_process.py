@@ -20,6 +20,7 @@ class Property:
 
 @dataclass
 class FrozenDebt:
+    """A dataclass representing frozen debt."""
     cpr: str
     name: str
     date_: str
@@ -208,7 +209,7 @@ def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenD
 
             if "(Accepteret med indefrysning)" in item.Name:
                 status = "Accepteret med indefrysning"
-            elif "(Indfriet)" in item.Name:
+            else:
                 status = row.DataItemControl(Name="Tekst row0").GetValuePattern().Value
 
             data.append(FrozenDebt(cpr, name, date_, amount, status))
@@ -216,7 +217,15 @@ def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenD
 
 
 def get_tax_data(property_number: str) -> list[tuple[str, str]]:
-    """"""
+    """Search for the given property number and get all tax contributions.
+    Also calculate the sum and add it to the result list.
+
+    Args:
+        property_number: The number of the property.
+
+    Returns:
+        A list of tuples containing [text, amount].
+    """
     _search_property(property_number)
 
     structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
@@ -240,11 +249,11 @@ def get_tax_data(property_number: str) -> list[tuple[str, str]]:
         data.append((text, amount))
 
     # Calculate sum
-    sum = 0
+    total = 0
     for _, amount in data:
-        sum += float(amount.replace(".", "").replace(",", "."))
-    sum = round(sum, 2)
-    data.append(("Sum", f"{sum:.2f}".replace(".",",")))
+        total += float(amount.replace(".", "").replace(",", "."))
+    total = round(total, 2)
+    data.append(("Sum", f"{total:.2f}".replace(".",",")))
 
     return data
 
