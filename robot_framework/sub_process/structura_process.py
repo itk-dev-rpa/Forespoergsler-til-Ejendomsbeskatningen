@@ -253,7 +253,7 @@ def get_tax_data(property_number: str) -> list[tuple[str, str]]:
     for _, amount in data:
         total += float(amount.replace(".", "").replace(",", "."))
     total = round(total, 2)
-    data.append(("Sum", f"{total:.2f}".replace(".",",")))
+    data.append(("Sum", f"{total:.2f}".replace(".", ",")))
 
     return data
 
