@@ -21,7 +21,8 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
     Args:
         property: The property object.
         owners: A list of owners as tuples of cpr and names.
-        frozen_debt: Frozen debt as a list of string tuples.
+        frozen_debt: Frozen debt as a list FrozenDebt objects.
+        tax_data: A list of tuples of text and amount.
         missing_payments: A list of Person objects.
         go_case_id: The id of the created case in Get Organised.
 

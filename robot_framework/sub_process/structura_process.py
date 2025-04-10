@@ -166,7 +166,7 @@ def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenD
         owner_cprs: A list of the owners cpr numbers.
 
     Returns:
-        A list of tuples containing [cpr, name, date, amount].
+        A list of FrozenDebt objects.
     """
     # New search
     structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
