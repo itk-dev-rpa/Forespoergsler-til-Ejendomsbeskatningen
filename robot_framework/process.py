@@ -44,7 +44,9 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
         for property_ in properties:
             orchestrator_connection.log_info(f"Searching on property {property_.property_number}")
             owners = structura_process.get_owners(property_.property_number, task.owner_1, task.owner_2)
-            frozen_debt = structura_process.get_frozen_debt(property_.property_number)
+            owner_cprs = [p[0] for p in owners]
+            frozen_debt = structura_process.get_frozen_debt(property_.property_number, owner_cprs)
+            tax_data = structura_process.get_tax_data(property_.property_number)
             missing_payments = [sap_process.get_property_debt(sap_session, cpr, name, property_.property_number) for cpr, name in owners]
 
             # Format results as an html div
@@ -52,6 +54,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
                 property_=property_,
                 owners=owners,
                 frozen_debt=frozen_debt,
+                tax_data=tax_data,
                 missing_payments=missing_payments
             )
             html_div_list.append(html_div)
