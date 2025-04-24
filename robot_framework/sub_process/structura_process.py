@@ -290,6 +290,13 @@ def open_structura(username: str, password: str):
     subprocess.Popen(r"C:\Program Files (x86)\KMD\KMD.JO.Structura\KMD.JO.Structura.exe", cwd=r"C:\Program Files (x86)\KMD\KMD.JO.Structura")  # pylint: disable=consider-using-with
 
     kmd_logon = uiautomation.WindowControl(AutomationId="MainLogonWindow", searchDepth=1)
+
+    # Wait for logon window to load
+    for _ in range(5):
+        if len(kmd_logon.ComboBoxControl(AutomationId="UserPwComboBoxCics").GetSelectionPattern().GetSelection()) == 1:
+            break
+        time.sleep(1)
+
     kmd_logon.EditControl(AutomationId="UserPwTextBoxUserName").GetValuePattern().SetValue(username)
     kmd_logon.EditControl(AutomationId="UserPwPasswordBoxPassword").GetValuePattern().SetValue(password)
     kmd_logon.ButtonControl(AutomationId="UserPwLogonButton").GetInvokePattern().Invoke()
