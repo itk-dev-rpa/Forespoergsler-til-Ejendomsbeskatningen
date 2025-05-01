@@ -59,9 +59,12 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             )
             html_div_list.append(html_div)
 
-        # Create GO case and upload incoming request
-        go_case = go_process.create_case(go_session, f"{task.address}, {' - '.join(p.property_number for p in properties)}")
-        go_case_id = json.loads(go_case)['CaseID']
+        # Find/Create GO case and upload incoming request
+        case_title = f"{task.address}"
+        go_case_id = go_process.find_case(case_title, go_session)
+        if not go_case_id:
+            go_case_id = go_process.create_case(go_session, case_title)
+
         go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address}.eml")
         orchestrator_connection.log_info(f"GO case created: {go_case_id}")
 
@@ -72,6 +75,8 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
         # Upload mail to GO
         go_process.upload_document(session=go_session, file=bytearray(html_body, encoding="utf-8"), case=go_case_id, filename=f"Email fra RPA - Ejendomsoplysning {task.address}.html")
+
+        # Delete task from mail queue
         graph_mail.delete_email(task.mail, graph_access)
 
 
