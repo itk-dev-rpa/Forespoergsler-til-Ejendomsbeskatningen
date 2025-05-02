@@ -60,9 +60,9 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             html_div_list.append(html_div)
 
         # Find/Create GO case and upload incoming request
-        case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
         go_case_id = go_process.find_case(task.address, go_session)
         if not go_case_id:
+            case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
             go_case_id = go_process.create_case(go_session, case_title)
 
         go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address}.eml")
