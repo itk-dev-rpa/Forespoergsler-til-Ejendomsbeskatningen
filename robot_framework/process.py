@@ -61,7 +61,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
         # Find/Create GO case and upload incoming request
         case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
-        go_case_id = go_process.find_case(case_title, go_session)
+        go_case_id = go_process.find_case(task.address, go_session)
         if not go_case_id:
             go_case_id = go_process.create_case(go_session, case_title)
 
