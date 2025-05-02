@@ -60,7 +60,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             html_div_list.append(html_div)
 
         # Find/Create GO case and upload incoming request
-        case_title = f"{task.address}"
+        case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
         go_case_id = go_process.find_case(case_title, go_session)
         if not go_case_id:
             go_case_id = go_process.create_case(go_session, case_title)
