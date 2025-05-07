@@ -32,7 +32,7 @@ def create_case(session: Session, title: str) -> str:
         title: Title of the case being created.
 
     Returns:
-        Return the response and session objects.
+        Return the CaseID of the created case.
     """
     url = urljoin(config.GO_API, "/_goapi/Cases/")
     payload = {
@@ -42,7 +42,7 @@ def create_case(session: Session, title: str) -> str:
     }
     response = session.post(url, data=json.dumps(payload), timeout=config.GO_TIMEOUT)
     response.raise_for_status()
-    return response.text
+    return response.json()['CaseID']
 
 
 def upload_document(*, file: bytearray, case: str, filename: str, agent_name: str | None = None, date_string: str | None = None, session: Session, doc_category: str | None = None) -> str:
@@ -73,3 +73,48 @@ def upload_document(*, file: bytearray, case: str, filename: str, agent_name: st
     response = session.post(url, data=json.dumps(payload), timeout=config.GO_TIMEOUT)
     response.raise_for_status()
     return response.text
+
+
+def find_case(case_title: str, session: Session) -> str | None:
+    """Search for an existing case in GO with the given case title.
+    The search finds any case that contains the given title in its title.
+
+    Args:
+        case_title: The title to search for.
+        session: Session object to access the API.
+
+    Raises:
+        LookupError: If more than one case was found.
+
+    Returns:
+        The case id of the found case if any.
+    """
+    url = config.GO_API + "/_goapi/Cases/FindByCaseProperties"
+    payload = {
+        "FieldProperties": [
+            {
+                "InternalName": "ows_Title",
+                "Value": case_title,
+                "ComparisonType": "Contains",
+            },
+            {
+                "InternalName": "ows_KLENummer",
+                "Value": "318;#25.02.00 Ejendomsbeskatning i almindelighed",
+                "ComparisonType": "Equals",
+            }
+        ],
+        "CaseTypePrefixes": ["GEO"],
+        "LogicalOperator": "AND",
+        "ExcludeDeletedCases": True,
+        "ReturnCasesNumber": 2
+    }
+    response = session.post(url, data=json.dumps(payload), timeout=config.GO_TIMEOUT)
+    response.raise_for_status()
+    cases = response.json()['CasesInfo']
+
+    if len(cases) == 0:
+        return None
+    if len(cases) == 1:
+        return cases[0]['CaseID']
+
+    raise LookupError(f"Multiple cases matched the search criteria: {case_title}")
