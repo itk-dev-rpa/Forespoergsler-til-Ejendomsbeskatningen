@@ -3,6 +3,7 @@ import json
 import os
 
 from dataclasses import dataclass
+from datetime import date
 
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from itk_dev_shared_components.sap import multi_session
@@ -65,7 +66,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
             go_case_id = go_process.create_case(go_session, case_title)
 
-        go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address}.eml")
+        go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address} {date.today()}.eml")
         orchestrator_connection.log_info(f"GO case created: {go_case_id}")
 
         # Join all result html divs and send as email
@@ -74,7 +75,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
         orchestrator_connection.log_info("Email sent")
 
         # Upload mail to GO
-        go_process.upload_document(session=go_session, file=bytearray(html_body, encoding="utf-8"), case=go_case_id, filename=f"Email fra RPA - Ejendomsoplysning {task.address}.html")
+        go_process.upload_document(session=go_session, file=bytearray(html_body, encoding="utf-8"), case=go_case_id, filename=f"Email fra RPA - Ejendomsoplysning {task.address} {date.today()}.html")
 
         # Delete task from mail queue
         graph_mail.delete_email(task.mail, graph_access)
@@ -110,6 +111,9 @@ def get_email_tasks(graph_access) -> list[Task]:
         owner_2 = soup.find_all('p')[4].get_text(separator="$").split('$')[1]
 
         tasks.append(Task(address, owner_1, owner_2, mail))
+
+    # Reverse task list to handle oldest tasks first
+    tasks.reverse()
 
     return tasks
 
