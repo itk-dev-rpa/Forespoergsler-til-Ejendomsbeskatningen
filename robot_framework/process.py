@@ -111,6 +111,9 @@ def get_email_tasks(graph_access) -> list[Task]:
 
         tasks.append(Task(address, owner_1, owner_2, mail))
 
+    # Reverse task list to handle oldest tasks first
+    tasks.reverse()
+
     return tasks
 
 
