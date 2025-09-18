@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import subprocess
 import os
 import difflib
+from datetime import datetime, timedelta
 
 import uiautomation
 from uiautomation import Keys, WindowVisualState
@@ -139,7 +140,6 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
     tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
 
     # Find owners
-
     owners_group = tree.TreeItemControl(Name="Aktuelle ejere")
     owners_group.GetExpandCollapsePattern().Expand()
     owner_elements: list[uiautomation.TreeItemControl] = owners_group.GetChildren()
@@ -224,6 +224,35 @@ def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenD
 
             data.append(FrozenDebt(cpr, name, date_, amount, status))
     return data
+
+
+def should_skip_due_to_frozen_debt(frozen_debt_list: list[FrozenDebt]) -> bool:
+    """Return true if any of the frozen debt is sent to 'Indfrielse' within the last 3 days.
+    Debt might not have been transfered to the correct systems yet and
+    the task should be postponed to another day.
+
+    Args:
+        frozen_debt_list: The list of FrozenDebt objects to check.
+
+    Returns:
+        True if the task should be skipped for now.
+    """
+    today = datetime.today()
+    three_days_ago = today - timedelta(days=3)
+    pattern = re.compile("Indfrielse pr. (\d{2}\.\d{2}\.\d{4})")
+
+    for frozen_debt in frozen_debt_list:
+        re_match = pattern.match(frozen_debt.status)
+
+        if re_match:
+            date_string = re_match.group(1)
+            indfrielse_date = datetime.strptime(date_string, "%d.%m.%Y")
+            if three_days_ago < indfrielse_date:
+                return True
+
+    return False
+
+
 
 
 def get_tax_data(property_number: str) -> list[tuple[str, str]]:
