@@ -25,7 +25,8 @@ The robot expects an input formatted as a json object:
 {
     "receivers": [
         "abc@email.com"
-    ]
+    ],
+    "doc_database_path": "C:\\database.db"
 }
 ```
 
