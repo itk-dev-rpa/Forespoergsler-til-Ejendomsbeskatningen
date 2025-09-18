@@ -20,7 +20,8 @@ dependencies = [
     "Pillow == 10.*",
     "itk_dev_shared_components == 2.*",
     "htpy==24.3.9",
-    "requests_ntlm == 1.*"
+    "requests_ntlm == 1.*",
+    "pypdf == 6.*"
 ]
 
 [project.optional-dependencies]
