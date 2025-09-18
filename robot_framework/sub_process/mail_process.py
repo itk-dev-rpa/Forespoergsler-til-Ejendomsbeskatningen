@@ -1,21 +1,30 @@
 """This module is responsible for sending results as emails."""
 
-from htpy import html, body, h3, p, ul, li, Element, div  # pylint: disable=no-name-in-module
+from datetime import date
+
+from htpy import html, body, h3, p, ul, li, Element, div, a, table, th, tr, td, style, hr  # pylint: disable=no-name-in-module
 
 from itk_dev_shared_components.smtp import smtp_util
 
 from robot_framework import config
-from robot_framework.sub_process.sap_process import MissingPaymentPerson
+from robot_framework.sub_process.sap_process import MissingPaymentPerson, MissingPaymentCase, MissingPaymentEntry
 from robot_framework.sub_process.structura_process import Property, FrozenDebt
 
 
 def join_email_divs(div_list: list[str]) -> str:
     """Join multiple div to a single html document string."""
-    html_body = html[body[[[div[s] for s in div_list]]]]
+    elements = []
+    for s in div_list:
+        elements.append(div[s])
+        elements.append(hr)
+    elements.pop()
+
+    html_body = html[body[[elements]]]
     return str(html_body)
 
 
-def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[FrozenDebt], tax_data: list[tuple[str, str]], missing_payments: list[MissingPaymentPerson]) -> str:
+def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[FrozenDebt], tax_data: list[tuple[str, str]],
+                   missing_payments: list[MissingPaymentPerson], tax_adjustments: list[dict[str, str]]) -> str:
     """Format inputs as a neat html div.
 
     Args:
@@ -24,7 +33,6 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
         frozen_debt: Frozen debt as a list FrozenDebt objects.
         tax_data: A list of tuples of text and amount.
         missing_payments: A list of Person objects.
-        go_case_id: The id of the created case in Get Organised.
 
     Returns:
         A string containing the html div.
@@ -46,7 +54,10 @@ def format_results(property_: Property, owners: list[tuple[str, str]], frozen_de
         _create_list(tax_data),
 
         h3["Udeståender i SAP"],
-        _format_missing_payments(missing_payments)
+        _format_missing_payments(missing_payments),
+
+        h3["Efterreguleringer af ejendomsskat"],
+        _format_tax_adjustments(tax_adjustments)
     ]
 
     return str(body_div)
@@ -100,6 +111,15 @@ def _format_missing_payments(missing_payments: list[MissingPaymentPerson]) -> El
     ]
 
 
+def _format_tax_adjustments(tax_adjustments: list[dict[str, str]]) -> Element:
+    """Helper function for creating a list of tax adjustments."""
+    if tax_adjustments:
+        adjustment_list = [[ta["property_number"], ta["taxt_year"], ta["report_date"]] for ta in tax_adjustments]
+        return _create_list(adjustment_list)
+
+    return p["Ingen justeringer i databasen."]
+
+
 def send_email(receivers: list[str], address: str, go_case_id: str, html_body: str):
     """Send an email to the given list of receivers.
 
@@ -117,3 +137,142 @@ def send_email(receivers: list[str], address: str, go_case_id: str, html_body: s
         smtp_server=config.SMTP_SERVER,
         smtp_port=config.SMTP_PORT
     )
+
+
+def send_no_properties_email(receivers: list[str], address: str):
+    """Send an email about the given address not being found.
+
+    Args:
+        receivers: The list of email receivers.
+        address: The address in question.
+    """
+    smtp_util.send_email(
+        receiver=receivers,
+        sender="itk-rpa@mkb.aarhus.dk",
+        subject=f"Ejendomsoplysning: {address} ikke fundet",
+        body=f"Adressen '{address}' kunne ikke findes i Structura.\nVenlig hilsen\nRobotten",
+        smtp_server=config.SMTP_SERVER,
+        smtp_port=config.SMTP_PORT
+    )
+
+def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
+                 tax_adjustments: list[dict[str, str]]) -> str:
+
+    current_date = date.today().strftime("%d/%m %Y")
+
+    # Top text
+    div_text = div[
+        p[f"Understående oplysninger er fra {current_date} og er svar på en henvendelse lavet via: ", a(href="https://selvbetjening.aarhuskommune.dk/da/content/forespoergsler-til-ejendomsbeskatning")["Forespørgsler til Ejendomsbeskatning | Selvbetjening.aarhuskommune.dk"]],
+        p["Læs her mere om, hvordan du hurtigst og nemmest får ejendomsoplysninger som mægler eller anden tredjepart: ", a(href="https://aarhus.dk/virksomhed/byggeri-og-grunde/er-du-en-ejendomsmaegler-som-oensker-oplysninger-om-en-ejendom")["Er du en ejendomsmægler, som ønsker oplysninger om en ejendom?"]],
+    ]
+
+    # Frozen debt
+    div_frozen_debt = div[
+        h3[f"Indefrosset grundskyld for skatteårene til og med 2023 for {address}."],
+        table[
+            th(width="300px")["Navn"], th(width="200px")["Beløb"],
+            (
+                tr[td[debt.name], td[f"{debt.amount} kr."]]
+                for debt in frozen_debt
+            )
+        ]
+    ]
+
+    # Missing payments
+    missing_payments_list = []
+    for person in missing_payments:
+        for case_ in person.cases:
+            for entry in case_.entries:
+                missing_payments_list.append(tr[td[f"{entry.title} for {person.name}"], td[f"{entry.amount} kr"]])
+
+    if not missing_payments_list:
+        missing_payments_list = [tr[td["Restance"], td["0 kr"]]]
+
+    div_missing_payments = div[
+        h3[f"Restancer for {address}."],
+        table[
+            th(width="300px")["Post"], th(width="200px")["Beløb"],
+            missing_payments_list,
+            tr[td(colspan="2")[
+                "Restancer kan betales via ", a(href="https://aarhus.dk/borger/borgerservice/oekonomi-og-pension/betaling-af-regninger-og-gaeld-til-kommunen")["Betaling af regninger og gæld til kommunen"]," og ellers:",
+                p(".centered")["Reg.nr.: 2211"],
+                p(".centered")["Kontonr.: 6446462022"],
+                p(".centered")["Tekst: Sælgers CPR nr. + ejendom"]
+            ]]
+        ]
+    ]
+
+    # Tax
+    div_tax = div[
+        h3[f"Ejendomsbidrag for {address}."],
+        p["(Hvis ikke andet fremgår af tabellen vedr. restancer, er understående beløb betalt)."],
+        table[
+            th(width="300px")["Post"], th(width="200px")["Beløb"],
+            (
+                tr[td[text], td[f"{amount} kr."]]
+                for text, amount in tax_data
+            )
+        ]
+    ]
+
+    # Property tax adjustment
+    if not tax_adjustments:
+        text = p["Der har pt. ikke været en efterregulering pba. af en 2020-vurdering."]
+    else:
+        text = [p[f"Der er d. {ta['report_date']} oprettet nye skattebilletter for skatteåret {ta['tax_year']} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for ta in tax_adjustments]
+
+    div_text2 = div[
+        h3[f"Efterreguleringer af ejendomskat for {address}"],
+        text
+    ]
+
+    # Collect it all
+    html_el = html[
+        style[
+            "table, th, td {border: 1px solid; border-collapse: collapse; padding: 3px}",
+            ".centered {text-align: center; margin: 0.3rem}",
+            "th {text-align: left}"
+        ],
+        body[
+            div_text,
+            div_frozen_debt,
+            div_missing_payments,
+            div_tax,
+            div_text2
+        ]
+    ]
+
+    return str(html_el)
+
+
+if __name__ == '__main__':
+    with open("template.html", "w") as out_file:
+        out_file.write(
+            new_template(
+                address="Hejvej 65, 8928 Hejby",
+                frozen_debt=[
+                    FrozenDebt("123456789", "Navn Navnesen", "14/12/2020", "2025,25", "Herre meget indefrossent"),
+                    FrozenDebt("123456789", "Navni Navnesen", "14/12/2020", "3300,25", "Herre meget indefrossent")
+                ],
+                missing_payments=[
+                    MissingPaymentPerson(
+                        "Navn Navnesen",
+                        "123456789",
+                        [
+                            MissingPaymentCase("Gældssag", [MissingPaymentEntry("Gældspost", "Ubetalt", "2014,75")]),
+                            MissingPaymentCase("Gældssag", [MissingPaymentEntry("Gældspost2", "Ubetalt", "20142,75")])
+                        ]
+                    )
+                ],
+                tax_data=[
+                    ("Rottebekæmpelse", "541,00"),
+                    ("Skorstensfejer", "120,50"),
+                    ("Sum", "661,50")
+                ],
+                tax_adjustments=[
+                    {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2021'},
+                    {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2021'},
+                    {'property_number': 'A', 'report_id': 3, 'report_date': '15-06-2024', 'tax_year': '2022'}
+                ]
+            )
+        )
