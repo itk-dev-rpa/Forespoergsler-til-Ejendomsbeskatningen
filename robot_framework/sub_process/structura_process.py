@@ -58,7 +58,17 @@ def find_property(address: str) -> list[Property]:
     ejendom_pane.EditControl(AutomationId="textBoxSideDoerNr", searchDepth=1).GetValuePattern().SetValue(door)
 
     # Search
-    search_view.ButtonControl(AutomationId="soegBtn").GetInvokePattern().Invoke()
+    # The button needs to be clicked since it stalls on errors
+    search_view.ButtonControl(AutomationId="soegBtn").Click(simulateMove=False)
+
+    # Check for error popup
+    error_popup = structura.WindowControl(Name="Fejl", searchDepth=1)
+    if error_popup.Exists(maxSearchSeconds=2):
+        if error_popup.TextControl().Name == "Ingen data opfylder søgekriteriet":
+            error_popup.ButtonControl(Name="OK").GetInvokePattern().Invoke()
+            return []
+        else:
+            raise RuntimeError("Unknown error popup")
 
     # Get results
     result = []
