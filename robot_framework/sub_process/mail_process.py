@@ -219,7 +219,17 @@ def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: 
     if not tax_adjustments:
         text = p["Der har pt. ikke været en efterregulering pba. af en 2020-vurdering."]
     else:
-        text = [p[f"Der er d. {ta['report_date']} oprettet nye skattebilletter for skatteåret {ta['tax_year']} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for ta in tax_adjustments]
+        # Group adjustments by report date
+        reports = {}
+        for ta in tax_adjustments:
+            report_date = ta["report_date"]
+            tax_year = ta['tax_year']
+            if report_date not in reports:
+                reports[report_date] = []
+            reports[report_date].append(tax_year)
+            reports[report_date].sort()
+
+        text = [p[f"Der er d. {report_date} oprettet nye skattebilletter for skatteåret {', '.join(reports[report_date])} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for report_date in reports]
 
     div_tax_adjustments = div[
         h3[f"Efterreguleringer af ejendomskat for {address}"],
@@ -278,8 +288,13 @@ if __name__ == '__main__':
                 ],
                 tax_adjustments=[
                     {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2021'},
+                    {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2022'},
+                    {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2023'},
+                    {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2023'},
+                    {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2022'},
                     {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2021'},
                     {'property_number': 'A', 'report_id': 3, 'report_date': '15-06-2024', 'tax_year': '2022'}
-                ]
+                ],
+                requested_data= ["Indefrosset grundskyld", "Restancer", "Ejendomsbidrag", "Efterregulering"]
             )
         )
