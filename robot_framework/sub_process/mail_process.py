@@ -23,7 +23,7 @@ def join_email_divs(div_list: list[str]) -> str:
     return str(html_body)
 
 
-def format_results(property_: Property, owners: list[tuple[str, str]], frozen_debt: list[FrozenDebt], tax_data: list[tuple[str, str]],
+def format_results(*, property_: Property, owners: list[tuple[str, str]], frozen_debt: list[FrozenDebt], tax_data: list[tuple[str, str]],
                    missing_payments: list[MissingPaymentPerson], tax_adjustments: list[dict[str, str]]) -> str:
     """Format inputs as a neat html div.
 
@@ -155,7 +155,7 @@ def send_no_properties_email(receivers: list[str], address: str):
         smtp_port=config.SMTP_PORT
     )
 
-def pretty_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
+def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
                  tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
     """Format the data in a prettier template that can be sent to the requesters.
 

@@ -43,7 +43,15 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     go_session = go_process.create_session(go_creds.username, go_creds.password)
 
     for task in tasks:
-        handle_task(task, receivers, orchestrator_connection, go_session, sap_session, graph_access, doc_database)
+        handle_task(
+            task=task,
+            receivers=receivers,
+            orchestrator_connection=orchestrator_connection,
+            go_session=go_session,
+            sap_session=sap_session,
+            graph_access=graph_access,
+            doc_database=doc_database
+        )
 
 
 @dataclass
@@ -55,7 +63,7 @@ class Task:
     mail: graph_mail.Email
 
 
-def handle_task(task: Task, receivers: list[str], orchestrator_connection: OrchestratorConnection, go_session, sap_session,
+def handle_task(*, task: Task, receivers: list[str], orchestrator_connection: OrchestratorConnection, go_session, sap_session,
                 graph_access: GraphAccess, doc_database: DocDatabase):
     """Handle a single task from start to finish.
 
