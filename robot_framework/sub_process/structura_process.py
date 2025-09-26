@@ -120,16 +120,12 @@ def _match_address_result(address: str, result: str) -> bool:
     return len(matches) == 1
 
 
-def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[str, str]]:
-    """Get the cpr numbers and names of the owners of the given property on the given date.
+def get_owners(property_number: str, owners: list[str]) -> list[tuple[str, str]]:
+    """Get the cpr numbers and names of the owners of the given property.
 
     Args:
         property_number: The property to look up.
-        owner_1: Name of the first owner to find.
-        owner_2: Name of the second owner to find.
-
-    Raises:
-        LookupError: If no owners could be found on the given date.
+        owners: The list of owner names to search for.
 
     Returns:
         A list of tuples of cpr numbers and names.
@@ -151,9 +147,9 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
     # Get all names on the list
     names = [owner_element.Name.split(",")[0] for owner_element in owner_elements]
 
-    owners = []
+    owners_result = []
 
-    for owner in (owner_1, owner_2):
+    for owner in owners:
         owner_matches = difflib.get_close_matches(owner, names, n=1)
         if not owner_matches:
             continue
@@ -163,9 +159,9 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
         owner_element.GetSelectionItemPattern().Select()
         cpr = structura.EditControl(AutomationId="textBoxCprCvr").GetValuePattern().Value
         name = structura.EditControl(AutomationId="textBoxNavn").GetValuePattern().Value
-        owners.append((cpr, name))
+        owners_result.append((cpr, name))
 
-    return owners
+    return owners_result
 
 
 def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenDebt]:
