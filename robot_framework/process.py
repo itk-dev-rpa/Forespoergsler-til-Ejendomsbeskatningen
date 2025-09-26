@@ -25,7 +25,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     graph_access = graph_authentication.authorize_by_username_password(graph_creds.username, **json.loads(graph_creds.password))
 
     doc_database = DocDatabase(arguments["doc_database_path"])
-    doc2archive_process.update_doc_database(doc_database)
+    doc2archive_process.update_doc_database(doc_database, orchestrator_connection)
 
     tasks = get_email_tasks(graph_access)
     if not tasks:
@@ -50,8 +50,8 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 class Task:
     """A dataclass representing an email task."""
     address: str
-    owner_1: str
-    owner_2: str
+    owners: list[str]
+    requested_data: list[str]
     mail: graph_mail.Email
 
 
@@ -71,7 +71,7 @@ def handle_task(task: Task, receivers: list[str], orchestrator_connection: Orche
 
     for property_ in properties:
         orchestrator_connection.log_info(f"Searching on property {property_.property_number}")
-        owners = structura_process.get_owners(property_.property_number, task.owner_1, task.owner_2)
+        owners = structura_process.get_owners(property_.property_number, task.owners)
         owner_cprs = [p[0] for p in owners]
 
         frozen_debt = structura_process.get_frozen_debt(property_.property_number, owner_cprs)
@@ -99,7 +99,8 @@ def handle_task(task: Task, receivers: list[str], orchestrator_connection: Orche
             frozen_debt=frozen_debt,
             missing_payments=missing_payments,
             tax_data=tax_data,
-            tax_adjustments=tax_adjustments
+            tax_adjustments=tax_adjustments,
+            requested_data=task.requested_data
         )
         html_div_list.append(html_div)
 
@@ -140,11 +141,26 @@ def get_email_tasks(graph_access) -> list[Task]:
 
     for mail in mails:
         soup = BeautifulSoup(mail.body, "html.parser")
-        address = soup.find_all('p')[1].get_text(separator="$").split('$')[1]
-        owner_1 = soup.find_all('p')[3].get_text(separator="$").split('$')[1]
-        owner_2 = soup.find_all('p')[4].get_text(separator="$").split('$')[1]
+        paragraphs = [p.get_text(separator="$").split('$') for p in soup.find_all('p')]
+        values = {p[0]: p[1] for p in paragraphs if len(p) == 2}
 
-        tasks.append(Task(address, owner_1, owner_2, mail))
+        if values["Jeg kan ikke finde adressen i udsøgningen"] == "Valgt":
+            continue  # TODO Reject
+
+        address = values["Indtast sagens adresse"]
+
+        if values["Drejer sagen sig om privatpersoner eller virksomhed?"] == "Privatpersoner":
+            names = [li.get_text(separator="$").split('$') for li in soup.find_all('li')]
+            names = [
+                " ".join([item.split(":")[1].strip() for item in name])
+                for name in names
+            ]
+        else:
+            names = [values["Indtast virksomhedens navn"]]
+
+        requested_data = values["Hvilke oplysninger efterspørges?"].split(", ")
+
+        tasks.append(Task(address, names, requested_data, mail))
 
     # Reverse task list to handle oldest tasks first
     tasks.reverse()
