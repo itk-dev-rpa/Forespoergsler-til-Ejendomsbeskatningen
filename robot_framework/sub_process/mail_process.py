@@ -155,8 +155,21 @@ def send_no_properties_email(receivers: list[str], address: str):
         smtp_port=config.SMTP_PORT
     )
 
-def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
+def pretty_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
                  tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
+    """Format the data in a prettier template that can be sent to the requesters.
+
+    Args:
+        address: The address of the property.
+        frozen_debt: A list of frozen debt.
+        missing_payments: A list of missing payments.
+        tax_data: A list of tax data.
+        tax_adjustments: A list of tax adjustments.
+        requested_data: The list of data that has been requested in the form.
+
+    Returns:
+        The pretty template as an HTML string.
+    """
 
     current_date = date.today().strftime("%d/%m %Y")
 
@@ -229,7 +242,7 @@ def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: 
             reports[report_date].append(tax_year)
             reports[report_date].sort()
 
-        text = [p[f"Der er d. {report_date} oprettet nye skattebilletter for skatteåret {', '.join(reports[report_date])} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for report_date in reports]
+        text = [p[f"Der er d. {report_date} oprettet nye skattebilletter for skatteåret {', '.join(tax_years)} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for report_date, tax_years in reports]
 
     div_tax_adjustments = div[
         h3[f"Efterreguleringer af ejendomskat for {address}"],
@@ -263,9 +276,9 @@ def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: 
 
 
 if __name__ == '__main__':
-    with open("template.html", "w") as out_file:
+    with open("template.html", "w", encoding="utf8") as out_file:
         out_file.write(
-            new_template(
+            pretty_template(
                 address="Hejvej 65, 8928 Hejby",
                 frozen_debt=[
                     FrozenDebt("123456789", "Navn Navnesen", "14/12/2020", "2025,25", "Herre meget indefrossent"),

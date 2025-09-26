@@ -57,6 +57,17 @@ class Task:
 
 def handle_task(task: Task, receivers: list[str], orchestrator_connection: OrchestratorConnection, go_session, sap_session,
                 graph_access: GraphAccess, doc_database: DocDatabase):
+    """Handle a single task from start to finish.
+
+    Args:
+        task: The task to handle.
+        receivers: The list of email receivers.
+        orchestrator_connection: The connection to Orchestrator.
+        go_session: The GO session.
+        sap_session: The SAP session.
+        graph_access: The GraphAccess object.
+        doc_database: The DocDatabase object.
+    """
     orchestrator_connection.log_info(f"Searching info on {task.address}")
     properties = structura_process.find_property(task.address)
     orchestrator_connection.log_error(f"Properties found: {len(properties)}")
@@ -94,7 +105,7 @@ def handle_task(task: Task, receivers: list[str], orchestrator_connection: Orche
         )
         html_div_list.append(html_div)
         # Nice format
-        html_div = mail_process.new_template(
+        html_div = mail_process.pretty_template(
             address=property_.location,
             frozen_debt=frozen_debt,
             missing_payments=missing_payments,

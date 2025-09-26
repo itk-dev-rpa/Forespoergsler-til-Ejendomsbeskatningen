@@ -65,11 +65,11 @@ def find_property(address: str) -> list[Property]:
     # Check for error popup
     error_popup = structura.WindowControl(Name="Fejl", searchDepth=1)
     if error_popup.Exists(maxSearchSeconds=2):
-        if error_popup.TextControl().Name == "Ingen data opfylder søgekriteriet":
-            error_popup.ButtonControl(Name="OK").GetInvokePattern().Invoke()
-            return []
-        else:
+        if error_popup.TextControl().Name != "Ingen data opfylder søgekriteriet":
             raise RuntimeError("Unknown error popup")
+
+        error_popup.ButtonControl(Name="OK").GetInvokePattern().Invoke()
+        return []
 
     # Get results
     result = []
@@ -235,7 +235,7 @@ def should_skip_due_to_frozen_debt(frozen_debt_list: list[FrozenDebt]) -> bool:
     """
     today = datetime.today()
     three_days_ago = today - timedelta(days=3)
-    pattern = re.compile("Indfrielse pr. (\d{2}\.\d{2}\.\d{4})")
+    pattern = re.compile(r"Indfrielse pr. (\d{2}\.\d{2}\.\d{4})")
 
     for frozen_debt in frozen_debt_list:
         re_match = pattern.match(frozen_debt.status)

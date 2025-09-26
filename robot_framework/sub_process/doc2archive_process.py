@@ -1,5 +1,6 @@
+"""This module handled integrations to KMD Doc2Arhcive."""
+
 import re
-import csv
 from datetime import datetime, timedelta
 import uuid
 import os
@@ -20,7 +21,8 @@ def open_doc2archive():
     """Start doc2archive and choose the correct folder to open.
     This function assumes that KMD Logon is already running and logged in.
     """
-    subprocess.Popen("C:\Program Files (x86)\KMD\KMD doc2archive\KMD.ZP.KMDDoc2archive.Client.Shell.exe", cwd="C:\Program Files (x86)\KMD\KMD doc2archive")
+    # pylint: disable=consider-using-with
+    subprocess.Popen(r"C:\Program Files (x86)\KMD\KMD doc2archive\KMD.ZP.KMDDoc2archive.Client.Shell.exe", cwd=r"C:\Program Files (x86)\KMD\KMD doc2archive")
     folder_popup = uiautomation.WindowControl(Name="KMD doc2archive", searchDepth=1).WindowControl(Name="Åbn mappe", searchDepth=1)
     folder_popup.ListItemControl(Name="Esr-afstem").GetSelectionItemPattern().Select()
     folder_popup.ButtonControl(Name="Åbn").GetInvokePattern().Invoke()
@@ -88,19 +90,6 @@ def extract_pdf_values(pdf_path: str) -> list[list[str]]:
         result.extend(page_values)
 
     return result
-
-
-def convert_pdf_to_csv(pdf_path: str, csv_path: str) -> None:
-    """Convert a doc2archive pdf with table data to a csv file.
-
-    Args:
-        pdf_path: The path to the pdf file.
-        csv_path: The path to save the csv file to.
-    """
-    with open(csv_path, "w", newline="") as file:
-        w = csv.writer(file)
-        for row in extract_pdf_values(pdf_path):
-            w.writerow(row)
 
 
 def read_document_list() -> list[DocumentMetaData]:
@@ -243,11 +232,11 @@ def search_for_documents(days: int) -> list[DocumentMetaData]:
 
     popup = doc2arcive.WindowControl(Name="KMD doc2archive", searchDepth=1)
     if popup.Exists():
-        if popup.TextControl().Name == "Ingen dokumenter opfylder søgekriterierne.":
-            popup.ButtonControl(Name="OK").GetInvokePattern().Invoke()
-            return []
-        else:
+        if popup.TextControl().Name != "Ingen dokumenter opfylder søgekriterierne.":
             raise RuntimeError("Unknown popup shown.")
+
+        popup.ButtonControl(Name="OK").GetInvokePattern().Invoke()
+        return []
 
     rows = read_document_list()
     assert len(rows) > 0

@@ -1,8 +1,9 @@
-
+"""This module is responsible for the Doc2Archive Sqlite database."""
 import sqlite3
 
 
 class DocDatabase:
+    """A proxy class for the database."""
     def __init__(self, database_path: str):
         self.database_path = database_path
         self._create_tables()
@@ -63,7 +64,7 @@ class DocDatabase:
 
         report_id = cursor.lastrowid
 
-        for property in property_list:
+        for property_ in property_list:
             cursor.execute(
                 """
                 INSERT INTO properties
@@ -71,7 +72,7 @@ class DocDatabase:
                 VALUES
                 (?, ?)
                 """,
-                (property, report_id)
+                (property_, report_id)
             )
 
         connection.commit()
@@ -106,7 +107,7 @@ class DocDatabase:
         def dict_factory(cursor, row):
             """Factory function to convert rows to dictionaries."""
             fields = [column[0] for column in cursor.description]
-            return {key: value for key, value in zip(fields, row)}
+            return dict(zip(fields, row))
 
         connection.row_factory = dict_factory
 
@@ -119,25 +120,3 @@ class DocDatabase:
             (property_number,)
         )
         return cursor.fetchall()
-
-
-if __name__ == '__main__':
-
-    import os
-    os.remove("test_db.db")
-
-    db = DocDatabase("test_db.db")
-    db._create_tables()
-    db.add_report_data(
-        "123456", 
-        "2021", 
-        [chr(i) for i in range(65, 75)]
-    )
-    db.add_report_data(
-        "ahdbdhe", 
-        "2022", 
-        [chr(i) for i in range(65, 75)]
-    )
-
-    result = db.search_property("A")
-    print(result)
