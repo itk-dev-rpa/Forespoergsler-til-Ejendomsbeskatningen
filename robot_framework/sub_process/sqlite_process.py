@@ -92,7 +92,6 @@ class DocDatabase:
         cursor = connection.execute("SELECT * FROM reports WHERE report_date = ? AND tax_year = ?", (report_date, tax_year))
         return len(cursor.fetchall()) > 0
 
-
     def search_property(self, property_number: str) -> list[dict[str, str]]:
         """Search for a property number in the doc database.
 

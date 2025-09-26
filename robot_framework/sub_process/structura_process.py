@@ -249,8 +249,6 @@ def should_skip_due_to_frozen_debt(frozen_debt_list: list[FrozenDebt]) -> bool:
     return False
 
 
-
-
 def get_tax_data(property_number: str) -> list[tuple[str, str]]:
     """Search for the given property number and get all tax contributions.
     Also calculate the sum and add it to the result list.

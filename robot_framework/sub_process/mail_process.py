@@ -155,8 +155,9 @@ def send_no_properties_email(receivers: list[str], address: str):
         smtp_port=config.SMTP_PORT
     )
 
+
 def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
-                 tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
+                    tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
     """Format the data in a prettier template that can be sent to the requesters.
 
     Args:
@@ -207,7 +208,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
             th(width="300px")["Post"], th(width="200px")["Beløb"],
             missing_payments_list,
             tr[td(colspan="2")[
-                "Restancer kan betales via ", a(href="https://aarhus.dk/borger/borgerservice/oekonomi-og-pension/betaling-af-regninger-og-gaeld-til-kommunen")["Betaling af regninger og gæld til kommunen"]," og ellers:",
+                "Restancer kan betales via ", a(href="https://aarhus.dk/borger/borgerservice/oekonomi-og-pension/betaling-af-regninger-og-gaeld-til-kommunen")["Betaling af regninger og gæld til kommunen"], " og ellers:",
                 p(".centered")["Reg.nr.: 2211"],
                 p(".centered")["Kontonr.: 6446462022"],
                 p(".centered")["Tekst: Sælgers CPR nr. + ejendom"]
@@ -308,6 +309,6 @@ if __name__ == '__main__':
                     {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2021'},
                     {'property_number': 'A', 'report_id': 3, 'report_date': '15-06-2024', 'tax_year': '2022'}
                 ],
-                requested_data= ["Indefrosset grundskyld", "Restancer", "Ejendomsbidrag", "Efterregulering"]
+                requested_data=["Indefrosset grundskyld", "Restancer", "Ejendomsbidrag", "Efterregulering"]
             )
         )

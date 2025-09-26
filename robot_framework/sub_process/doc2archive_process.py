@@ -156,7 +156,6 @@ def parse_document_data(data_str: str) -> DocumentMetaData:
     return DocumentMetaData(report_id, report_date, tax_year)
 
 
-
 def save_document(document_data: DocumentMetaData, document_index: int) -> str:
     """Save the document as a pdf in the current working dir.
 
