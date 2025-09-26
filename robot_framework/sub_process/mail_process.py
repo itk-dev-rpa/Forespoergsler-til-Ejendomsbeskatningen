@@ -114,7 +114,7 @@ def _format_missing_payments(missing_payments: list[MissingPaymentPerson]) -> El
 def _format_tax_adjustments(tax_adjustments: list[dict[str, str]]) -> Element:
     """Helper function for creating a list of tax adjustments."""
     if tax_adjustments:
-        adjustment_list = [[ta["property_number"], ta["taxt_year"], ta["report_date"]] for ta in tax_adjustments]
+        adjustment_list = [[ta["property_number"], ta["tax_year"], ta["report_date"]] for ta in tax_adjustments]
         return _create_list(adjustment_list)
 
     return p["Ingen justeringer i databasen."]
@@ -156,7 +156,7 @@ def send_no_properties_email(receivers: list[str], address: str):
     )
 
 def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
-                 tax_adjustments: list[dict[str, str]]) -> str:
+                 tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
 
     current_date = date.today().strftime("%d/%m %Y")
 
@@ -221,12 +221,22 @@ def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: 
     else:
         text = [p[f"Der er d. {ta['report_date']} oprettet nye skattebilletter for skatteåret {ta['tax_year']} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for ta in tax_adjustments]
 
-    div_text2 = div[
+    div_tax_adjustments = div[
         h3[f"Efterreguleringer af ejendomskat for {address}"],
         text
     ]
 
     # Collect it all
+    div_list = []
+    if "Indefrosset grundskyld" in requested_data:
+        div_list.append(div_frozen_debt)
+    if "Restancer" in requested_data:
+        div_list.append(div_missing_payments)
+    if "Ejendomsbidrag" in requested_data:
+        div_list.append(div_tax)
+    if "Efterregulering" in requested_data:
+        div_list.append(div_tax_adjustments)
+
     html_el = html[
         style[
             "table, th, td {border: 1px solid; border-collapse: collapse; padding: 3px}",
@@ -235,10 +245,7 @@ def new_template(address: str, frozen_debt: list[FrozenDebt], missing_payments: 
         ],
         body[
             div_text,
-            div_frozen_debt,
-            div_missing_payments,
-            div_tax,
-            div_text2
+            div_list
         ]
     ]
 
