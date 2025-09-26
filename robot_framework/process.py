@@ -8,6 +8,7 @@ from datetime import date
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from itk_dev_shared_components.sap import multi_session
 from itk_dev_shared_components.graph import authentication as graph_authentication
+from itk_dev_shared_components.graph.authentication import GraphAccess
 from itk_dev_shared_components.graph import mail as graph_mail
 from bs4 import BeautifulSoup
 
@@ -38,9 +39,8 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
     receivers = arguments["receivers"]
 
     # Initialize GO session
-    # go_creds = orchestrator_connection.get_credential(config.GO_CREDENTIALS)
-    # go_session = go_process.create_session(go_creds.username, go_creds.password)
-    go_session = None
+    go_creds = orchestrator_connection.get_credential(config.GO_CREDENTIALS)
+    go_session = go_process.create_session(go_creds.username, go_creds.password)
 
     for task in tasks:
         handle_task(task, receivers, orchestrator_connection, go_session, sap_session, graph_access, doc_database)
@@ -56,7 +56,7 @@ class Task:
 
 
 def handle_task(task: Task, receivers: list[str], orchestrator_connection: OrchestratorConnection, go_session, sap_session,
-                graph_access, doc_database: DocDatabase):
+                graph_access: GraphAccess, doc_database: DocDatabase):
     orchestrator_connection.log_info(f"Searching info on {task.address}")
     properties = structura_process.find_property(task.address)
     orchestrator_connection.log_error(f"Properties found: {len(properties)}")
@@ -64,7 +64,7 @@ def handle_task(task: Task, receivers: list[str], orchestrator_connection: Orche
     if not properties:
         orchestrator_connection.log_info(f"No properties found on {task.address}")
         mail_process.send_no_properties_email(receivers, task.address)
-        # graph_mail.delete_email(task.mail, graph_access)
+        graph_mail.delete_email(task.mail, graph_access)
         return
 
     html_div_list = []
@@ -105,13 +105,13 @@ def handle_task(task: Task, receivers: list[str], orchestrator_connection: Orche
         html_div_list.append(html_div)
 
     # Find/Create GO case and upload incoming request
-    # go_case_id = go_process.find_case(task.address, go_session)
-    # if not go_case_id:
-    #     case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
-    #     go_case_id = go_process.create_case(go_session, case_title)
+    go_case_id = go_process.find_case(task.address, go_session)
+    if not go_case_id:
+        case_title = f"{task.address}, {' - '.join(p.property_number for p in properties)}"
+        go_case_id = go_process.create_case(go_session, case_title)
 
-    # go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address} {date.today()}.eml")
-    # orchestrator_connection.log_info(f"GO case created: {go_case_id}")
+    go_process.upload_document(session=go_session, file=graph_mail.get_email_as_mime(task.mail, graph_access).getvalue(), case=go_case_id, filename=f"Forespørgsel {task.address} {date.today()}.eml")
+    orchestrator_connection.log_info(f"GO case created: {go_case_id}")
 
     # Join all result html divs and send as email
     html_body = mail_process.join_email_divs(html_div_list)
@@ -119,13 +119,13 @@ def handle_task(task: Task, receivers: list[str], orchestrator_connection: Orche
     orchestrator_connection.log_info("Email sent")
 
     # Upload mail to GO
-    # go_process.upload_document(session=go_session, file=bytearray(html_body, encoding="utf-8"), case=go_case_id, filename=f"Email fra RPA - Ejendomsoplysning {task.address} {date.today()}.html")
+    go_process.upload_document(session=go_session, file=bytearray(html_body, encoding="utf-8"), case=go_case_id, filename=f"Email fra RPA - Ejendomsoplysning {task.address} {date.today()}.html")
 
     # Delete task from mail queue
-    # graph_mail.delete_email(task.mail, graph_access)  # TODO
+    graph_mail.delete_email(task.mail, graph_access)
 
 
-def get_email_tasks(graph_access) -> list[Task]:
+def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
     """Get tasks from emails.
 
     Args:
@@ -136,6 +136,7 @@ def get_email_tasks(graph_access) -> list[Task]:
     """
     mails = graph_mail.get_emails_from_folder("itk-rpa@mkb.aarhus.dk", "Indbakke/Ejendomsbeskatning", graph_access)
     mails = [mail for mail in mails if mail.sender == 'noreply@aarhus.dk' and 'Forespørgsler til Ejendomsbeskatning' in mail.subject]
+    mails.reverse()
 
     tasks = []
 
@@ -145,7 +146,7 @@ def get_email_tasks(graph_access) -> list[Task]:
         values = {p[0]: p[1] for p in paragraphs if len(p) == 2}
 
         if values["Jeg kan ikke finde adressen i udsøgningen"] == "Valgt":
-            continue  # TODO Reject
+            graph_mail.delete_email(mail, graph_access)
 
         address = values["Indtast sagens adresse"]
 
@@ -161,9 +162,6 @@ def get_email_tasks(graph_access) -> list[Task]:
         requested_data = values["Hvilke oplysninger efterspørges?"].split(", ")
 
         tasks.append(Task(address, names, requested_data, mail))
-
-    # Reverse task list to handle oldest tasks first
-    tasks.reverse()
 
     return tasks
 
