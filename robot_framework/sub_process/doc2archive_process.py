@@ -29,6 +29,7 @@ def open_doc2archive():
 def kill_doc2archive():
     """Kill the Doc2Archive process."""
     os.system("taskkill /f /im KMD.ZP.KMDDoc2archive.Client.Shell.exe")
+    os.system("taskkill /f /im AcroRd32.exe")
 
 
 @dataclass
