@@ -33,6 +33,7 @@ def format_results(*, property_: Property, owners: list[tuple[str, str]], frozen
         frozen_debt: Frozen debt as a list FrozenDebt objects.
         tax_data: A list of tuples of text and amount.
         missing_payments: A list of Person objects.
+        tax_adjustments: A list of tax adjustments.
 
     Returns:
         A string containing the html div.
@@ -274,41 +275,3 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     ]
 
     return str(html_el)
-
-
-if __name__ == '__main__':
-    with open("template.html", "w", encoding="utf8") as out_file:
-        out_file.write(
-            pretty_template(
-                address="Hejvej 65, 8928 Hejby",
-                frozen_debt=[
-                    FrozenDebt("123456789", "Navn Navnesen", "14/12/2020", "2025,25", "Herre meget indefrossent"),
-                    FrozenDebt("123456789", "Navni Navnesen", "14/12/2020", "3300,25", "Herre meget indefrossent")
-                ],
-                missing_payments=[
-                    MissingPaymentPerson(
-                        "Navn Navnesen",
-                        "123456789",
-                        [
-                            MissingPaymentCase("Gældssag", [MissingPaymentEntry("Gældspost", "Ubetalt", "2014,75")]),
-                            MissingPaymentCase("Gældssag", [MissingPaymentEntry("Gældspost2", "Ubetalt", "20142,75")])
-                        ]
-                    )
-                ],
-                tax_data=[
-                    ("Rottebekæmpelse", "541,00"),
-                    ("Skorstensfejer", "120,50"),
-                    ("Sum", "661,50")
-                ],
-                tax_adjustments=[
-                    {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2021'},
-                    {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2022'},
-                    {'property_number': 'A', 'report_id': 1, 'report_date': '21-02-2025', 'tax_year': '2023'},
-                    {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2023'},
-                    {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2022'},
-                    {'property_number': 'A', 'report_id': 2, 'report_date': '11-03-2025', 'tax_year': '2021'},
-                    {'property_number': 'A', 'report_id': 3, 'report_date': '15-06-2024', 'tax_year': '2022'}
-                ],
-                requested_data=["Indefrosset grundskyld", "Restancer", "Ejendomsbidrag", "Efterregulering"]
-            )
-        )
