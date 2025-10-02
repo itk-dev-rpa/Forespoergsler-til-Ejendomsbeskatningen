@@ -7,7 +7,7 @@ from htpy import html, body, h3, p, ul, li, Element, div, a, table, th, tr, td, 
 from itk_dev_shared_components.smtp import smtp_util
 
 from robot_framework import config
-from robot_framework.sub_process.sap_process import MissingPaymentPerson, MissingPaymentCase, MissingPaymentEntry
+from robot_framework.sub_process.sap_process import MissingPaymentPerson
 from robot_framework.sub_process.structura_process import Property, FrozenDebt
 
 
