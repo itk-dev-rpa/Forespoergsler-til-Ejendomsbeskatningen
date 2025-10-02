@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import subprocess
 import os
 import difflib
+from datetime import datetime, timedelta
 
 import uiautomation
 from uiautomation import Keys, WindowVisualState
@@ -58,7 +59,17 @@ def find_property(address: str) -> list[Property]:
     ejendom_pane.EditControl(AutomationId="textBoxSideDoerNr", searchDepth=1).GetValuePattern().SetValue(door)
 
     # Search
-    search_view.ButtonControl(AutomationId="soegBtn").GetInvokePattern().Invoke()
+    # The button needs to be clicked since it stalls on errors
+    search_view.ButtonControl(AutomationId="soegBtn").Click(simulateMove=False)
+
+    # Check for error popup
+    error_popup = structura.WindowControl(Name="Fejl", searchDepth=1)
+    if error_popup.Exists(maxSearchSeconds=2):
+        if error_popup.TextControl().Name != "Ingen data opfylder søgekriteriet":
+            raise RuntimeError("Unknown error popup")
+
+        error_popup.ButtonControl(Name="OK").GetInvokePattern().Invoke()
+        return []
 
     # Get results
     result = []
@@ -109,16 +120,12 @@ def _match_address_result(address: str, result: str) -> bool:
     return len(matches) == 1
 
 
-def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[str, str]]:
-    """Get the cpr numbers and names of the owners of the given property on the given date.
+def get_owners(property_number: str, owners: list[str]) -> list[tuple[str, str]]:
+    """Get the cpr numbers and names of the owners of the given property.
 
     Args:
         property_number: The property to look up.
-        owner_1: Name of the first owner to find.
-        owner_2: Name of the second owner to find.
-
-    Raises:
-        LookupError: If no owners could be found on the given date.
+        owners: The list of owner names to search for.
 
     Returns:
         A list of tuples of cpr numbers and names.
@@ -129,7 +136,6 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
     tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
 
     # Find owners
-
     owners_group = tree.TreeItemControl(Name="Aktuelle ejere")
     owners_group.GetExpandCollapsePattern().Expand()
     owner_elements: list[uiautomation.TreeItemControl] = owners_group.GetChildren()
@@ -141,9 +147,9 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
     # Get all names on the list
     names = [owner_element.Name.split(",")[0] for owner_element in owner_elements]
 
-    owners = []
+    owners_result = []
 
-    for owner in (owner_1, owner_2):
+    for owner in owners:
         owner_matches = difflib.get_close_matches(owner, names, n=1)
         if not owner_matches:
             continue
@@ -153,9 +159,9 @@ def get_owners(property_number: str, owner_1: str, owner_2: str) -> list[tuple[s
         owner_element.GetSelectionItemPattern().Select()
         cpr = structura.EditControl(AutomationId="textBoxCprCvr").GetValuePattern().Value
         name = structura.EditControl(AutomationId="textBoxNavn").GetValuePattern().Value
-        owners.append((cpr, name))
+        owners_result.append((cpr, name))
 
-    return owners
+    return owners_result
 
 
 def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenDebt]:
@@ -214,6 +220,33 @@ def get_frozen_debt(property_number: str, owner_cprs: list[str]) -> list[FrozenD
 
             data.append(FrozenDebt(cpr, name, date_, amount, status))
     return data
+
+
+def should_skip_due_to_frozen_debt(frozen_debt_list: list[FrozenDebt]) -> bool:
+    """Return true if any of the frozen debt is sent to 'Indfrielse' within the last 3 days.
+    Debt might not have been transfered to the correct systems yet and
+    the task should be postponed to another day.
+
+    Args:
+        frozen_debt_list: The list of FrozenDebt objects to check.
+
+    Returns:
+        True if the task should be skipped for now.
+    """
+    today = datetime.today()
+    three_days_ago = today - timedelta(days=3)
+    pattern = re.compile(r"Indfrielse pr. (\d{2}\.\d{2}\.\d{4})")
+
+    for frozen_debt in frozen_debt_list:
+        re_match = pattern.match(frozen_debt.status)
+
+        if re_match:
+            date_string = re_match.group(1)
+            indfrielse_date = datetime.strptime(date_string, "%d.%m.%Y")
+            if three_days_ago < indfrielse_date:
+                return True
+
+    return False
 
 
 def get_tax_data(property_number: str) -> list[tuple[str, str]]:

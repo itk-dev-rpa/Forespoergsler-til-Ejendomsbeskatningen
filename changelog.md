@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-06-10
+
+### Added
+
+- Added Doc2Archive process.
+
+### Changed
+
+- Changed email logic to new OS2Forms output.
+- Added pretty template to result email.
+- Added skip when frozen debt has been sent to SAP within 3 days.
+
+### Fixed
+
+- Skip cases where address is not in Structura.
+
 ## [1.4.0] - 2025-06-10
 
 ### Changed
