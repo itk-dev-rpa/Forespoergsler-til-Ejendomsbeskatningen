@@ -134,7 +134,7 @@ def handle_task(*, task: Task, receivers: list[str], orchestrator_connection: Or
 
     # Join all result html divs and send as email
     html_body = mail_process.join_email_divs(html_div_list)
-    mail_process.send_email(receivers, task.address, "go_case_id", html_body)
+    mail_process.send_email(receivers, task.address, go_case_id, html_body)
     orchestrator_connection.log_info("Email sent")
 
     # Upload mail to GO
@@ -188,5 +188,5 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
 if __name__ == '__main__':
     conn_string = os.getenv("OpenOrchestratorConnString")
     crypto_key = os.getenv("OpenOrchestratorKey")
-    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk"]}')
+    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk"], "doc_database_path": "C:/Repos/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}')
     process(oc)
