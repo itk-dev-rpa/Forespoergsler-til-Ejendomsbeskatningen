@@ -244,7 +244,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
             reports[report_date].append(tax_year)
             reports[report_date].sort()
 
-        text = [p[f"Der er d. {report_date} oprettet nye skattebilletter for skatteåret {', '.join(tax_years)} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for report_date, tax_years in reports]
+        text = [p[f"Der er d. {report_date} oprettet nye skattebilletter for skatteåret {', '.join(tax_years)} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for report_date, tax_years in reports.items()]
 
     div_tax_adjustments = div[
         h3[f"Efterreguleringer af ejendomskat for {address}"],
