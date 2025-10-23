@@ -92,10 +92,21 @@ def get_property_debt(session, cpr: str, name: str, property_number: str) -> Mis
 def _find_tree_items(tree, property_number: str) -> list[str]:
     """Find all tree items that contains the given property number
     in their text.
+    Only tree items under '02 Ejendom' are considered.
     """
     items = []
 
+    # Find parent node with "02 Ejendom" in the text
     for key in tree.GetAllNodeKeys():
+        text = tree.GetItemText(key, "Column2")
+        if text == "02      Ejendom":
+            child_keys = tree.GetSubNodesCol(key)
+            break
+    else:
+        raise LookupError("No parent nodes with '02 Ejendom' found")
+
+    # Find relevant child nodes
+    for key in child_keys:
         text = tree.GetItemText(key, "Column2")
 
         if property_number in text:
