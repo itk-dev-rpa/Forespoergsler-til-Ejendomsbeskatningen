@@ -235,8 +235,10 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     else:
         content = p["Ingen skattedata tilgængeligt for ejendommen."]
 
+    current_year = date.today().year
+
     div_tax = div[
-        h3[f"Ejendomsbidrag for {address}."],
+        h3[f"Ejendomsbidrag for {address} for skatteåret {current_year}."],
         p["(Hvis ikke andet fremgår af tabellen vedr. restancer, er nedenstående beløb betalt)."],
         content
     ]
