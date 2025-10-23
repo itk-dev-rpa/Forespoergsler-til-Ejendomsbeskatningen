@@ -106,6 +106,7 @@ def _deconstruct_address(address: str) -> tuple[str | None, ...]:
 
 def _match_address_result(address: str, result: str) -> bool:
     """Match an address string against a result string from Structura.
+    If the result string contains 'Udgået' False is returned.
 
     Args:
         address: The address string to match.
@@ -114,6 +115,9 @@ def _match_address_result(address: str, result: str) -> bool:
     Returns:
         True if a match is found.
     """
+    if "Udgået" in result:
+        return False
+
     street, number, floor, door, _, _ = _deconstruct_address(address)
     regex_pattern = fr"{street} {number}[ ,.]*?{floor.upper() if floor else ''}[ ,.]*?{door.upper() if door else ''},\w*?,"
     matches = re.findall(regex_pattern, result)
