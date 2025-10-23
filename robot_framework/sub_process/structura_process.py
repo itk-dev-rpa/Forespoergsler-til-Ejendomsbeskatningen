@@ -272,6 +272,10 @@ def get_tax_data(property_number: str) -> list[tuple[str, str]]:
     tax_group = tree.TreeItemControl(Name="Skatter")
     tax_group.GetExpandCollapsePattern().Expand()
     tax_elements: list[uiautomation.TreeItemControl] = tax_group.GetChildren()
+
+    if not tax_elements:
+        return []
+
     current_year = datetime.today().year
     for tax_element in reversed(tax_elements):
         if tax_element.Name.startswith(str(current_year)):
