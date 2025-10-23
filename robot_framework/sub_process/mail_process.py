@@ -224,16 +224,21 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     ]
 
     # Tax
-    div_tax = div[
-        h3[f"Ejendomsbidrag for {address}."],
-        p["(Hvis ikke andet fremgår af tabellen vedr. restancer, er understående beløb betalt)."],
-        table[
+    if tax_data:
+        content = table[
             th(width="300px")["Post"], th(width="200px")["Beløb"],
             (
                 tr[td[text], td[f"{amount} kr."]]
                 for text, amount in tax_data
             )
         ]
+    else:
+        content = p["Ingen skattedata tilgængeligt for ejendommen."]
+
+    div_tax = div[
+        h3[f"Ejendomsbidrag for {address}."],
+        p["(Hvis ikke andet fremgår af tabellen vedr. restancer, er nedenstående beløb betalt)."],
+        content
     ]
 
     # Property tax adjustment
