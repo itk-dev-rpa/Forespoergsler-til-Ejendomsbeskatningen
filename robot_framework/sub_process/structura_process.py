@@ -264,11 +264,15 @@ def get_tax_data(property_number: str) -> list[tuple[str, str]]:
     structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
     tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
 
-    # Expand 'Skatter' and select last element
+    # Expand 'Skatter' and select latest element in the current year
     tax_group = tree.TreeItemControl(Name="Skatter")
     tax_group.GetExpandCollapsePattern().Expand()
     tax_elements: list[uiautomation.TreeItemControl] = tax_group.GetChildren()
-    tax_elements[-1].GetSelectionItemPattern().Select()
+    current_year = datetime.today().year
+    for tax_element in reversed(tax_elements):
+        if tax_element.Name.startswith(str(current_year)):
+            tax_element.GetSelectionItemPattern().Select()
+            break
 
     # Read tax table
     data = []
