@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Properties which are "Udgået" are now skipped.
 - Fixed regex error when an address has a space in the city name.
 
-
 ## [2.0.1] - 2025-10-07
 
 ### Fixed
