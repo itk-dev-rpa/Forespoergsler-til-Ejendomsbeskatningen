@@ -119,7 +119,7 @@ def _match_address_result(address: str, result: str) -> bool:
         return False
 
     street, number, floor, door, _, _ = _deconstruct_address(address)
-    regex_pattern = fr"{street} {number}[ ,.]*?{floor.upper() if floor else ''}[ ,.]*?{door.upper() if door else ''},\w*?,"
+    regex_pattern = fr"{street} {number}[ ,.]*?{floor.upper() if floor else ''}[ ,.]*?{door.upper() if door else ''},[\w ]*?,"
     matches = re.findall(regex_pattern, result)
     return len(matches) == 1
 
