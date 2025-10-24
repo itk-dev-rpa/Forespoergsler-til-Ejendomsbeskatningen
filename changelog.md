@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
+[2.1.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.1.0
 [2.0.1]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.0.1
 [2.0.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.0.0
 [1.4.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/1.4.0
