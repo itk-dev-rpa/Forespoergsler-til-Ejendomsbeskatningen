@@ -158,6 +158,7 @@ def send_no_properties_email(receivers: list[str], address: str):
     )
 
 
+# pylint: disable=too-many-branches
 def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
                     tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
     """Format the data in a prettier template that can be sent to the requesters.
@@ -285,6 +286,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     ]
 
     return str(html_el)
+# pylint: enable=too-many-branches
 
 
 def _format_report_date(report_date: str) -> str:
