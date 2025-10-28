@@ -1,6 +1,7 @@
 """This module is responsible for sending results as emails."""
 
 from datetime import date
+from collections import defaultdict
 
 from htpy import html, body, h3, p, ul, li, Element, div, a, table, th, tr, td, style, hr  # pylint: disable=no-name-in-module
 
@@ -157,6 +158,7 @@ def send_no_properties_email(receivers: list[str], address: str):
     )
 
 
+# pylint: disable=too-many-branches
 def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_payments: list[MissingPaymentPerson], tax_data: list[tuple[str, str]],
                     tax_adjustments: list[dict[str, str]], requested_data: list[str]) -> str:
     """Format the data in a prettier template that can be sent to the requesters.
@@ -177,28 +179,30 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
 
     # Top text
     div_text = div[
-        p[f"Understående oplysninger er fra {current_date} og er svar på en henvendelse lavet via: ", a(href="https://selvbetjening.aarhuskommune.dk/da/content/forespoergsler-til-ejendomsbeskatning")["Forespørgsler til Ejendomsbeskatning | Selvbetjening.aarhuskommune.dk"]],
+        p["Hej"],
+        p[f"Oplysningerne herunder er fra {current_date} og er svar på en henvendelse lavet via: ", a(href="https://selvbetjening.aarhuskommune.dk/da/content/forespoergsler-til-ejendomsbeskatning")["Forespørgsler til Ejendomsbeskatning | Selvbetjening.aarhuskommune.dk"]],
         p["Læs her mere om, hvordan du hurtigst og nemmest får ejendomsoplysninger som mægler eller anden tredjepart: ", a(href="https://aarhus.dk/virksomhed/byggeri-og-grunde/er-du-en-ejendomsmaegler-som-oensker-oplysninger-om-en-ejendom")["Er du en ejendomsmægler, som ønsker oplysninger om en ejendom?"]],
     ]
 
     # Frozen debt
-    div_frozen_debt = div[
-        h3[f"Indefrosset grundskyld for skatteårene til og med 2023 for {address}."],
-        table[
+    if frozen_debt:
+        content = table[
             th(width="300px")["Navn"], th(width="200px")["Beløb"],
             (
                 tr[td[debt.name], td[f"{debt.amount} kr."]]
                 for debt in frozen_debt
             )
         ]
+    else:
+        content = p["Ingen indefrossent grundskyld."]
+
+    div_frozen_debt = div[
+        h3[f"Indefrosset grundskyld for skatteårene til og med 2023 for {address}."],
+        content
     ]
 
     # Missing payments
-    missing_payments_list = []
-    for person in missing_payments:
-        for case_ in person.cases:
-            for entry in case_.entries:
-                missing_payments_list.append(tr[td[f"{entry.title} for {person.name}"], td[f"{entry.amount} kr"]])
+    missing_payments_list = _merge_missing_payments(missing_payments)
 
     if not missing_payments_list:
         missing_payments_list = [tr[td["Restance"], td["0 kr"]]]
@@ -218,16 +222,23 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     ]
 
     # Tax
-    div_tax = div[
-        h3[f"Ejendomsbidrag for {address}."],
-        p["(Hvis ikke andet fremgår af tabellen vedr. restancer, er understående beløb betalt)."],
-        table[
+    if tax_data:
+        content = table[
             th(width="300px")["Post"], th(width="200px")["Beløb"],
             (
                 tr[td[text], td[f"{amount} kr."]]
                 for text, amount in tax_data
             )
         ]
+    else:
+        content = p["Ingen skattedata tilgængeligt for ejendommen."]
+
+    current_year = date.today().year
+
+    div_tax = div[
+        h3[f"Ejendomsbidrag for {address} for skatteåret {current_year}."],
+        p["(Hvis ikke andet fremgår af tabellen vedr. restancer, er nedenstående beløb betalt)."],
+        content
     ]
 
     # Property tax adjustment
@@ -237,7 +248,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
         # Group adjustments by report date
         reports = {}
         for ta in tax_adjustments:
-            report_date = ta["report_date"]
+            report_date = _format_report_date(ta["report_date"])
             tax_year = ta['tax_year']
             if report_date not in reports:
                 reports[report_date] = []
@@ -247,7 +258,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
         text = [p[f"Der er d. {report_date} oprettet nye skattebilletter for skatteåret {', '.join(tax_years)} pba. en ny vurdering. De blev sendt til daværende ejer(e)."] for report_date, tax_years in reports.items()]
 
     div_tax_adjustments = div[
-        h3[f"Efterreguleringer af ejendomskat for {address}"],
+        h3[f"Efterreguleringer af ejendomsskat for {address}"],
         text
     ]
 
@@ -275,3 +286,41 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     ]
 
     return str(html_el)
+# pylint: enable=too-many-branches
+
+
+def _format_report_date(report_date: str) -> str:
+    """Change a date string from 'yyyy-mm-dd' to 'dd/mm yyyy'."""
+    return f"{report_date[8:12]}/{report_date[5:7]} {report_date[0:4]}"
+
+
+def _merge_missing_payments(missing_payments: list[MissingPaymentPerson]) -> list[str]:
+    """Generate a list of table row elements based on the missing payments.
+    If more people have entries with identical amounts and titles they are
+    assumed to be the same entry and is merged into one.
+
+    Args:
+        missing_payments: A list of MissingPaymentPerson objects.
+
+    Returns:
+        A list of table row objects containing all unique missing payment entries.
+    """
+    result = []
+
+    missing_payments_list = defaultdict(list)
+
+    # Group entries by title and amount
+    for person in missing_payments:
+        for case_ in person.cases:
+            for entry in case_.entries:
+                key = (entry.title, entry.amount)
+                missing_payments_list[key].append(person.name)
+
+    # Render list of merged entries
+    for (title, amount), names in missing_payments_list.items():
+        if len(names) == 1:
+            result.append(tr[td[f"{title} ({names[0]})"], td[f"{amount} kr"]])
+        else:
+            result.append(tr[td[f"{title}"], td[f"{amount} kr"]])
+
+    return result

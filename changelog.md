@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-10-24
+
+### Changed
+
+- Added date to tax data in result email.
+- Only look for cases under "02 Ejendom" in SAP.
+- Removed duplicates of missing payments from SAP.
+- Tax data is checked for the current year instead of the latest available.
+
+### Fixed
+
+- Minor typos and rewording of result email.
+- Bug when no tax data was available in Structura.
+- Properties which are "Udgået" are now skipped.
+- Fixed regex error when an address has a space in the city name.
+
 ## [2.0.1] - 2025-10-07
 
 ### Fixed
@@ -71,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
+[2.1.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.1.0
 [2.0.1]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.0.1
 [2.0.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.0.0
 [1.4.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/1.4.0

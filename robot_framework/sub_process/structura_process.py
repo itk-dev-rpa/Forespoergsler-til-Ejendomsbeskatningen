@@ -106,6 +106,7 @@ def _deconstruct_address(address: str) -> tuple[str | None, ...]:
 
 def _match_address_result(address: str, result: str) -> bool:
     """Match an address string against a result string from Structura.
+    If the result string contains 'Udgået' False is returned.
 
     Args:
         address: The address string to match.
@@ -114,8 +115,11 @@ def _match_address_result(address: str, result: str) -> bool:
     Returns:
         True if a match is found.
     """
+    if "Udgået" in result:
+        return False
+
     street, number, floor, door, _, _ = _deconstruct_address(address)
-    regex_pattern = fr"{street} {number}[ ,.]*?{floor.upper() if floor else ''}[ ,.]*?{door.upper() if door else ''},\w*?,"
+    regex_pattern = fr"{street} {number}[ ,.]*?{floor.upper() if floor else ''}[ ,.]*?{door.upper() if door else ''},[\w ]*?,"
     matches = re.findall(regex_pattern, result)
     return len(matches) == 1
 
@@ -264,11 +268,19 @@ def get_tax_data(property_number: str) -> list[tuple[str, str]]:
     structura = uiautomation.WindowControl(RegexName="KMD", AutomationId="MainForm", searchDepth=1)
     tree = structura.TreeControl(AutomationId="treeView", searchDepth=6)
 
-    # Expand 'Skatter' and select last element
+    # Expand 'Skatter' and select latest element in the current year
     tax_group = tree.TreeItemControl(Name="Skatter")
     tax_group.GetExpandCollapsePattern().Expand()
     tax_elements: list[uiautomation.TreeItemControl] = tax_group.GetChildren()
-    tax_elements[-1].GetSelectionItemPattern().Select()
+
+    if not tax_elements:
+        return []
+
+    current_year = datetime.today().year
+    for tax_element in reversed(tax_elements):
+        if tax_element.Name.startswith(str(current_year)):
+            tax_element.GetSelectionItemPattern().Select()
+            break
 
     # Read tax table
     data = []
