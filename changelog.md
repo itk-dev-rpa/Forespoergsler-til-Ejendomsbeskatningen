@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.1] - 2025-10-30
 
+### Changed
+
+- Specified zero debt info in result mail.
+
 ### Fixed
 
 - Only read names from first "ul" list in mail body.
