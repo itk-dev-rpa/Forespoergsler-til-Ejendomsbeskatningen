@@ -170,7 +170,8 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
         address = values["Indtast sagens adresse"]
 
         if values["Drejer sagen sig om privatpersoner eller virksomhed?"] == "Privatpersoner":
-            names = [li.get_text(separator="$").split('$') for li in soup.find_all('li')]
+            name_list = soup.find("ul")
+            names = [li.get_text(separator="$").split('$') for li in name_list.find_all('li')]
             names = [
                 " ".join([item.split(":")[1].strip() for item in name])
                 for name in names
