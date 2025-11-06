@@ -165,9 +165,9 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
         values = {p[0]: p[1] for p in paragraphs if len(p) == 2}
 
         if values["Jeg kan ikke finde adressen i udsøgningen"] == "Valgt":
-            graph_mail.delete_email(mail, graph_access)
-
-        address = values["Indtast sagens adresse"]
+            address = values["Skriv den fulde adresse, som sagen vedrører"]
+        else:
+            address = values["Indtast sagens adresse"]
 
         if values["Drejer sagen sig om privatpersoner eller virksomhed?"] == "Privatpersoner":
             name_list = soup.find("ul")
@@ -189,5 +189,5 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
 if __name__ == '__main__':
     conn_string = os.getenv("OpenOrchestratorConnString")
     crypto_key = os.getenv("OpenOrchestratorKey")
-    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk", "ejendomsskat@aarhus.dk"], "doc_database_path": "C:/Repos/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}')
+    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk", "ejendomsskat@aarhus.dk"], "doc_database_path": "C:/dev/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}')
     process(oc)
