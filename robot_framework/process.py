@@ -166,6 +166,7 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
 
         if values["Jeg kan ikke finde adressen i udsøgningen"] == "Valgt":
             graph_mail.delete_email(mail, graph_access)
+            continue
 
         address = values["Indtast sagens adresse"]
 
