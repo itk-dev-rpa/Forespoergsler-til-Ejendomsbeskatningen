@@ -195,5 +195,5 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
 if __name__ == '__main__':
     conn_string = os.getenv("OpenOrchestratorConnString")
     crypto_key = os.getenv("OpenOrchestratorKey")
-    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk", "ejendomsskat@aarhus.dk"], "doc_database_path": "C:/Repos/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}')
+    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk", "ejendomsskat@aarhus.dk"], "doc_database_path": "C:/Repos/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}', 'trigger_id')
     process(oc)
