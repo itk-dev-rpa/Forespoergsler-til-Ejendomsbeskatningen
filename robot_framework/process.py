@@ -11,6 +11,7 @@ from itk_dev_shared_components.graph import authentication as graph_authenticati
 from itk_dev_shared_components.graph.authentication import GraphAccess
 from itk_dev_shared_components.graph import mail as graph_mail
 from bs4 import BeautifulSoup
+import itk_dev_event_log
 
 from robot_framework import config
 from robot_framework.sub_process import structura_process, sap_process, mail_process, go_process, doc2archive_process
@@ -27,6 +28,9 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
 
     doc_database = DocDatabase(arguments["doc_database_path"])
     doc2archive_process.update_doc_database(doc_database, orchestrator_connection)
+
+    event_log = orchestrator_connection.get_constant("Event Log")
+    itk_dev_event_log.setup_logging(event_log.value)
 
     tasks = get_email_tasks(graph_access)
     if not tasks:
@@ -52,6 +56,7 @@ def process(orchestrator_connection: OrchestratorConnection) -> None:
             graph_access=graph_access,
             doc_database=doc_database
         )
+        itk_dev_event_log.emit(orchestrator_connection.process_name, "Request handled")
 
 
 @dataclass
@@ -166,6 +171,7 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
 
         if values["Jeg kan ikke finde adressen i udsøgningen"] == "Valgt":
             graph_mail.delete_email(mail, graph_access)
+            continue
 
         address = values["Indtast sagens adresse"]
 
@@ -189,5 +195,5 @@ def get_email_tasks(graph_access: GraphAccess) -> list[Task]:
 if __name__ == '__main__':
     conn_string = os.getenv("OpenOrchestratorConnString")
     crypto_key = os.getenv("OpenOrchestratorKey")
-    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk", "ejendomsskat@aarhus.dk"], "doc_database_path": "C:/Repos/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}')
+    oc = OrchestratorConnection("Ejendomsbeskatning Test", conn_string, crypto_key, '{"receivers": ["itk-rpa@mkb.aarhus.dk", "ejendomsskat@aarhus.dk"], "doc_database_path": "C:/Repos/Forespoergsler-til-Ejendomsbeskatningen/property_reports.db"}', 'trigger_id')
     process(oc)
