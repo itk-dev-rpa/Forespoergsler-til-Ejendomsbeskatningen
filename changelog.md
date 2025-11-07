@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.2] - 2025-11-07
 
+### Added
+
+- Added event logging.
+
+### Changed
+
+- Bumped OpenOrchestrator to 2.0.0.
+
 ### Fixed
 
 - Emails without a DAWA address are now properly skipped.
