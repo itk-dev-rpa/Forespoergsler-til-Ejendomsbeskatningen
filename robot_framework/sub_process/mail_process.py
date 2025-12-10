@@ -205,7 +205,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     missing_payments_list = _merge_missing_payments(missing_payments)
 
     if not missing_payments_list:
-        missing_payments_list = [tr[td["Restance (ejendomsskat til og med 2023, ejendomsbidrag og byggesagsgebyrer)"], td["0 kr"]]]
+        missing_payments_list = [tr[td["Restance (ejendomsskat til og med 2023, ejendomsbidrag og byggesagsgebyrer)"], td["0,00 kr"]]]
 
     div_missing_payments = div[
         h3[f"Restancer for {address}."],
