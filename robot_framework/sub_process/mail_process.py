@@ -319,8 +319,8 @@ def _merge_missing_payments(missing_payments: list[MissingPaymentPerson]) -> lis
     # Render list of merged entries
     for (title, amount), names in missing_payments_list.items():
         if len(names) == 1:
-            result.append(tr[td[f"{title} ({names[0]})"], td[f"{amount} kr"]])
+            result.append(tr[td[f"{title} ({names[0]})"], td[f"{amount:.2f} kr"]])
         else:
-            result.append(tr[td[f"{title}"], td[f"{amount} kr"]])
+            result.append(tr[td[f"{title}"], td[f"{amount:.2f} kr"]])
 
     return result
