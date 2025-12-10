@@ -194,7 +194,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
             )
         ]
     else:
-        content = p["Ingen indefrossent grundskyld."]
+        content = p["Ingen indefrosset grundskyld for de adspurgte ejere."]
 
     div_frozen_debt = div[
         h3[f"Indefrosset grundskyld for skatteårene til og med 2023 for {address}."],
