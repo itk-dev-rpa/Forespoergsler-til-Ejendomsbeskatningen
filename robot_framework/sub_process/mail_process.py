@@ -194,7 +194,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
             )
         ]
     else:
-        content = p["Ingen indefrossent grundskyld."]
+        content = p["Ingen indefrosset grundskyld for de adspurgte ejere."]
 
     div_frozen_debt = div[
         h3[f"Indefrosset grundskyld for skatteårene til og med 2023 for {address}."],
@@ -205,7 +205,7 @@ def pretty_template(*, address: str, frozen_debt: list[FrozenDebt], missing_paym
     missing_payments_list = _merge_missing_payments(missing_payments)
 
     if not missing_payments_list:
-        missing_payments_list = [tr[td["Restance (ejendomsskat til og med 2023, ejendomsbidrag og byggesagsgebyrer)"], td["0 kr"]]]
+        missing_payments_list = [tr[td["Restance (ejendomsskat til og med 2023, ejendomsbidrag og byggesagsgebyrer)"], td["0,00 kr"]]]
 
     div_missing_payments = div[
         h3[f"Restancer for {address}."],
@@ -319,8 +319,8 @@ def _merge_missing_payments(missing_payments: list[MissingPaymentPerson]) -> lis
     # Render list of merged entries
     for (title, amount), names in missing_payments_list.items():
         if len(names) == 1:
-            result.append(tr[td[f"{title} ({names[0]})"], td[f"{amount} kr"]])
+            result.append(tr[td[f"{title} ({names[0]})"], td[f"{amount:.2f} kr"]])
         else:
-            result.append(tr[td[f"{title}"], td[f"{amount} kr"]])
+            result.append(tr[td[f"{title}"], td[f"{amount:.2f} kr"]])
 
     return result
