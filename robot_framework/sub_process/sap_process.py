@@ -106,11 +106,12 @@ def _find_tree_items(tree, property_number: str) -> list[str]:
         raise LookupError("No parent nodes with '02 Ejendom' found")
 
     # Find relevant child nodes
-    for key in child_keys:
-        text = tree.GetItemText(key, "Column2")
+    if child_keys:
+        for key in child_keys:
+            text = tree.GetItemText(key, "Column2")
 
-        if property_number in text:
-            items.append((key, text))
+            if property_number in text:
+                items.append((key, text))
 
     return items
 
