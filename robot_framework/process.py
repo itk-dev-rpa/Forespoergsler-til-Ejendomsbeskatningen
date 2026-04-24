@@ -15,7 +15,7 @@ import itk_dev_event_log
 
 from robot_framework import config
 from robot_framework.sub_process import structura_process, sap_process, mail_process, go_process, doc2archive_process
-from robot_framework.sub_process.sqlite_process import DocDatabase
+from robot_framework.sub_process.database_process import DocDatabase
 
 
 def process(orchestrator_connection: OrchestratorConnection) -> None:
