@@ -22,7 +22,8 @@ dependencies = [
     "htpy==24.3.9",
     "requests_ntlm == 1.*",
     "pypdf == 6.*",
-    "itk_dev_event_log == 1.*"
+    "itk_dev_event_log == 1.*",
+    "pyodbc == 5.*",
 ]
 
 [project.optional-dependencies]
