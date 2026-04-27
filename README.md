@@ -28,12 +28,12 @@ The robot expects an input formatted as a json object:
     "receivers": [
         "abc@email.com"
     ],
-    "doc_database_path": "C:\\database.db"
+    "doc_database_path": "SERVER=Bla;DATABASE=bluh;"
 }
 ```
 
 Receivers: A list of emails to send the result to.
-doc_database_path: The absolute path to an Sqlite database with Doc2Archive report data.
+doc_database_path: The ODBC connection string to the doc database.
 
 ## Troubleshooting
 
