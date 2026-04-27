@@ -2,6 +2,10 @@
 import pyodbc
 
 
+PROPERTIES_TABLE = "dbo.ejendomsskat_properties"
+REPORTS_TABLE = "dbo.ejendomsskat_reports"
+
+
 class DocDatabase:
     """A proxy class for the database."""
     def __init__(self, connection_string: str):
@@ -13,9 +17,9 @@ class DocDatabase:
         connection = pyodbc.connect(self.connection_string)
 
         connection.execute(
-            """
-            IF OBJECT_ID(N'dbo.reports', N'U') IS NULL
-            CREATE TABLE dbo.reports
+            f"""
+            IF OBJECT_ID(N'{REPORTS_TABLE}', N'U') IS NULL
+            CREATE TABLE {REPORTS_TABLE}
             (
                 id INT IDENTITY(1,1) PRIMARY KEY,
                 report_date NVARCHAR(50),
@@ -25,25 +29,25 @@ class DocDatabase:
         )
 
         connection.execute(
-            """
-            IF OBJECT_ID(N'dbo.properties', N'U') IS NULL
-            CREATE TABLE dbo.properties
+            f"""
+            IF OBJECT_ID(N'{PROPERTIES_TABLE}', N'U') IS NULL
+            CREATE TABLE {PROPERTIES_TABLE}
             (
                 id INT IDENTITY(1,1) PRIMARY KEY,
                 property_number NVARCHAR(50),
-                report_id INT REFERENCES dbo.reports (id)
+                report_id INT REFERENCES {REPORTS_TABLE} (id)
             )
             """
         )
 
         connection.execute(
-            """
+            f"""
             IF NOT EXISTS (
                 SELECT 1 FROM sys.indexes
                 WHERE name = 'property_number_index'
-                AND object_id = OBJECT_ID(N'dbo.properties')
+                AND object_id = OBJECT_ID(N'{PROPERTIES_TABLE}')
             )
-            CREATE INDEX property_number_index ON dbo.properties (property_number)
+            CREATE INDEX property_number_index ON {PROPERTIES_TABLE} (property_number)
             """
         )
 
@@ -62,8 +66,8 @@ class DocDatabase:
         cursor = connection.cursor()
 
         cursor.execute(
-            """
-            INSERT INTO dbo.reports (report_date, tax_year)
+            f"""
+            INSERT INTO {REPORTS_TABLE} (report_date, tax_year)
             OUTPUT INSERTED.id
             VALUES (?, ?)
             """,
@@ -74,8 +78,8 @@ class DocDatabase:
 
         for property_ in property_list:
             cursor.execute(
-                """
-                INSERT INTO dbo.properties (property_number, report_id)
+                f"""
+                INSERT INTO {PROPERTIES_TABLE} (property_number, report_id)
                 VALUES (?, ?)
                 """,
                 property_, report_id
@@ -96,7 +100,7 @@ class DocDatabase:
         connection = pyodbc.connect(self.connection_string)
 
         cursor = connection.execute(
-            "SELECT 1 FROM dbo.reports WHERE report_date = ? AND tax_year = ?",
+            f"SELECT 1 FROM {REPORTS_TABLE} WHERE report_date = ? AND tax_year = ?",
             report_date, tax_year
         )
         return cursor.fetchone() is not None
@@ -113,16 +117,12 @@ class DocDatabase:
         connection = pyodbc.connect(self.connection_string)
 
         cursor = connection.execute(
-            """
-            SELECT * FROM dbo.properties
-            JOIN dbo.reports ON dbo.properties.report_id = dbo.reports.id
+            f"""
+            SELECT * FROM {PROPERTIES_TABLE}
+            JOIN {REPORTS_TABLE} ON {PROPERTIES_TABLE}.report_id = {REPORTS_TABLE}.id
             WHERE property_number = ?
             """,
             property_number
         )
         columns = [column[0] for column in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-
-if __name__ == '__main__':
-    d = DocDatabase(r"Server=localhost\SQLEXPRESS;Database=Ejendomsskat;Trusted_Connection=yes;Driver={ODBC Driver 17 for SQL Server}")
