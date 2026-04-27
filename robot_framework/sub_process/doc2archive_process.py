@@ -14,7 +14,7 @@ import win32clipboard
 from itk_dev_shared_components.misc import file_util
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 
-from robot_framework.sub_process.sqlite_process import DocDatabase
+from robot_framework.sub_process.database_process import DocDatabase
 
 
 def open_doc2archive():
