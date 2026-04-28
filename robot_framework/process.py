@@ -1,6 +1,5 @@
 """This module contains the main process of the robot."""
 import json
-import os
 
 from dataclasses import dataclass
 from datetime import date
