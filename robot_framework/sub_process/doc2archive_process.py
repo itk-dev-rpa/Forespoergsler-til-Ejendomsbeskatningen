@@ -62,8 +62,8 @@ def extract_page_values(page: pypdf.PageObject) -> list[list[str]]:
 
     # Make sure that the correct number of columns are read
     assert len(v) % 7 == 0
-    # Make sure everything except spaces is read
-    assert (len(t) - sum(len(s) for s in v)) == t.count(" ")
+    # Make sure everything except white space is read
+    assert sum(len(s) for s in v) == len(re.sub(r"\s", "", t))
 
     # Split into rows
     for i in range(0, len(v), 7):
