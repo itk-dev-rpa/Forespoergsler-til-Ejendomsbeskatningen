@@ -143,8 +143,8 @@ instead of just spaces.
 
 - Initial release
 
-[2.4.1]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.3.0
-[2.4.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.3.0
+[2.4.1]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.4.1
+[2.4.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.4.0
 [2.3.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.3.0
 [2.2.1]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.2.1
 [2.2.0]: https://github.com/itk-dev-rpa/Forespoergsler-til-Ejendomsbeskatningen/releases/tag/2.2.0
